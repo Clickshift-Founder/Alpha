@@ -755,6 +755,14 @@
                     </div>
                 </div>
 
+                <!-- Risk Assessment Section - Moved up for better UX -->
+                <div class="analysis-section" id="riskSection" style="display: none;">
+                    <h2 class="analysis-title">⚠️ Risk Assessment</h2>
+                    <div id="riskAssessment">
+                        <!-- Risk assessment will be populated here -->
+                    </div>
+                </div>
+
                 <div class="token-info" id="tokenInfo">
                     <!-- Token info cards will be populated here -->
                 </div>
@@ -777,13 +785,6 @@
                     <h2 class="analysis-title">🐋 Whale Activity Monitor</h2>
                     <div id="whaleAnalysis">
                         <!-- Whale analysis will be populated here -->
-                    </div>
-                </div>
-                
-                <div class="analysis-section">
-                    <h2 class="analysis-title">⚠️ Risk Assessment</h2>
-                    <div id="riskAssessment">
-                        <!-- Risk assessment will be populated here -->
                     </div>
                 </div>
                 
@@ -1084,7 +1085,7 @@
            };
        }
 
-       // Enhanced entry recommendation with price AND market cap targets
+       // Enhanced entry recommendation with zero liquidity protection
        function generateSmartEntryRecommendation(tokenData, orders) {
            let recommendation = 'WAIT';
            let confidence = 'MEDIUM';
@@ -1092,6 +1093,52 @@
            
            const currentPrice = tokenData.price;
            const currentMarketCap = tokenData.marketCap;
+           
+           // CRITICAL: Check for zero liquidity first
+           if (tokenData.liquidity === 0) {
+               recommendation = 'AVOID';
+               confidence = 'EXTREME';
+               reasoning = 'ZERO LIQUIDITY DETECTED - Token cannot be traded. Extreme risk of total loss.';
+               
+               return {
+                   action: recommendation,
+                   confidence: confidence,
+                   reasoning: reasoning,
+                   netScore: -100,
+                   bullishScore: 0,
+                   bearishScore: 100,
+                   entryPrice: currentPrice,
+                   stopLoss: currentPrice * 0.01, // Essentially worthless
+                   takeProfit: currentPrice,
+                   entryMarketCap: currentMarketCap,
+                   stopMarketCap: currentMarketCap * 0.01,
+                   targetMarketCap: currentMarketCap,
+                   riskReward: 0
+               };
+           }
+           
+           // CRITICAL: Check for extremely low liquidity
+           if (tokenData.liquidity < 5000) {
+               recommendation = 'AVOID';
+               confidence = 'HIGH';
+               reasoning = 'EXTREMELY LOW LIQUIDITY - High risk of 90%+ slippage on any trade.';
+               
+               return {
+                   action: recommendation,
+                   confidence: confidence,
+                   reasoning: reasoning,
+                   netScore: -75,
+                   bullishScore: 0,
+                   bearishScore: 75,
+                   entryPrice: currentPrice * 0.95,
+                   stopLoss: currentPrice * 0.5, // 50% slippage expected
+                   takeProfit: currentPrice * 1.1,
+                   entryMarketCap: currentMarketCap * 0.95,
+                   stopMarketCap: currentMarketCap * 0.5,
+                   targetMarketCap: currentMarketCap * 1.1,
+                   riskReward: 0.1
+               };
+           }
            
            // Advanced scoring algorithm
            let bullishScore = 0;
@@ -1391,8 +1438,14 @@
            const risks = [];
            const positives = [];
            
-           // Liquidity analysis
-           if (tokenData.liquidity < 25000) {
+           // Liquidity analysis - ENHANCED with zero liquidity protection
+           if (tokenData.liquidity === 0) {
+               riskScore += 50; // Maximum penalty
+               risks.push('ZERO LIQUIDITY - Token cannot be traded at all');
+           } else if (tokenData.liquidity < 5000) {
+               riskScore += 40;
+               risks.push('Extremely low liquidity - expect 90%+ slippage');
+           } else if (tokenData.liquidity < 25000) {
                riskScore += 35;
                risks.push('Very low liquidity - high slippage risk');
            } else if (tokenData.liquidity < 100000) {
@@ -1510,22 +1563,36 @@
            console.log('Demo Usage Logged:', usage);
        }
        
+       // Enhanced Solana address validation
        function isValidSolanaAddress(address) {
+           // Check length
+           if (address.length !== 44) {
+               console.log('Invalid length:', address.length);
+               return false;
+           }
+           
+           // Check for valid base58 characters (no 0, O, I, l)
            const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
-           return base58Regex.test(address);
+           const isValid = base58Regex.test(address);
+           
+           if (!isValid) {
+               console.log('Failed base58 validation:', address);
+           }
+           
+           return isValid;
        }
        
        function displayFullResults(tokenData, analysis) {
            document.getElementById('loading').style.display = 'none';
            document.getElementById('content').style.display = 'block';
            
-           // Display all sections
+           // Display all sections with risk assessment moved up
            displayEntryRecommendation(analysis.entryRecommendation);
+           displayRiskAssessment(analysis.riskAssessment); // Moved up for better UX
            displayEnhancedTokenInfo(tokenData);
            displayPumpAnalysis(analysis.pumpSignals, analysis.marketSentiment);
            displayExitClusters(analysis.exitClusters, tokenData);
            displayWhaleAnalysis(analysis.whaleActivity);
-           displayRiskAssessment(analysis.riskAssessment);
        }
 
        function displayEntryRecommendation(rec) {
@@ -1601,10 +1668,19 @@
                    <div class="value">$${tokenData.volume24h.toLocaleString()}</div>
                    <div style="color: #666; font-size: 0.85em;">Trading activity</div>
                </div>
-               <div class="info-card">
+                               <div class="info-card">
                    <h3>Liquidity</h3>
-                   <div class="value">$${tokenData.liquidity.toLocaleString()}</div>
+                   <div class="value">${tokenData.liquidity.toLocaleString()}</div>
                    <div style="color: #666; font-size: 0.85em;">Available depth</div>
+                   ${tokenData.liquidity === 0 ? `
+                       <div style="background: #FF6B6B; color: white; padding: 5px; border-radius: 5px; margin-top: 8px; font-size: 0.8em;">
+                           ⚠️ ZERO LIQUIDITY - CANNOT TRADE
+                       </div>
+                   ` : tokenData.liquidity < 10000 ? `
+                       <div style="background: #FF7E00; color: white; padding: 5px; border-radius: 5px; margin-top: 8px; font-size: 0.8em;">
+                           ⚠️ VERY LOW - HIGH SLIPPAGE RISK
+                       </div>
+                   ` : ''}
                </div>
                <div class="info-card">
                    <h3>Holder Count</h3>
@@ -1782,6 +1858,7 @@
        
        function displayRiskAssessment(riskAssessment) {
            const riskDiv = document.getElementById('riskAssessment');
+           const riskSection = document.getElementById('riskSection');
            const riskClass = `risk-${riskAssessment.level.toLowerCase().replace(' ', '-')}`;
            
            riskDiv.innerHTML = `
@@ -1816,6 +1893,9 @@
                    </div>
                </div>
            `;
+           
+           // Show the risk section
+           riskSection.style.display = 'block';
        }
        
        function getRiskRecommendation(riskLevel) {
