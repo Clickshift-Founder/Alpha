@@ -296,77 +296,62 @@
             gap: 10px;
         }
         
-        .cluster-item, .analysis-card {
-            background: linear-gradient(135deg, rgba(36, 94, 237, 0.03), rgba(38, 194, 129, 0.03));
+        .entry-recommendation {
+            background: linear-gradient(135deg, rgba(38, 194, 129, 0.1), rgba(76, 175, 80, 0.1));
+            border: 2px solid rgba(38, 194, 129, 0.3);
             padding: 20px;
             border-radius: 15px;
-            margin-bottom: 16px;
-            border-left: 4px solid #245EED;
-            transition: all 0.2s ease;
+            margin-bottom: 20px;
         }
-        
-        .cluster-item:hover, .analysis-card:hover {
-            transform: translateX(3px);
-            box-shadow: 0 8px 25px rgba(36, 94, 237, 0.1);
-        }
-        
-        .cluster-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+
+        .entry-recommendation h3 {
+            color: #26C281;
             margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
+            font-weight: 600;
         }
-        
-        .cluster-price {
+
+        .recommendation-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .rec-buy { background: linear-gradient(45deg, #26C281, #4CAF50); color: white; }
+        .rec-wait { background: linear-gradient(45deg, #FFB347, #FF7E00); color: white; }
+        .rec-avoid { background: linear-gradient(45deg, #FF6B6B, #FF4757); color: white; }
+
+        .price-targets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .target-item {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(36, 94, 237, 0.1);
+        }
+
+        .target-price {
             font-size: 1.2em;
             font-weight: 600;
             color: #0A1C3D;
         }
-        
-        .cluster-change {
-            background: linear-gradient(45deg, #245EED, #26C281);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-        
-        .cluster-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
+
+        .target-mcap {
             font-size: 0.9em;
             color: #666;
+            margin-top: 5px;
         }
-        
-        .cluster-details strong {
-            color: #0A1C3D;
-        }
-        
-        .risk-indicator, .pump-indicator {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            margin-bottom: 18px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9em;
-        }
-        
-        .risk-low { background: linear-gradient(45deg, #26C281, #4CAF50); color: white; }
-        .risk-moderate { background: linear-gradient(45deg, #FFB347, #FF7E00); color: white; }
-        .risk-high { background: linear-gradient(45deg, #FF7E00, #FF6B6B); color: white; }
-        .risk-extreme { background: linear-gradient(45deg, #FF6B6B, #FF4757); color: white; }
-        
-        .pump-very-high { background: linear-gradient(45deg, #26C281, #00D4AA); color: white; }
-        .pump-high { background: linear-gradient(45deg, #4CAF50, #26C281); color: white; }
-        .pump-moderate { background: linear-gradient(45deg, #FFB347, #26C281); color: white; }
-        .pump-low { background: linear-gradient(45deg, #E5E5E5, #B0B0B0); color: #666; }
-        
+
         .loading {
             text-align: center;
             padding: 50px;
@@ -404,6 +389,36 @@
             padding: 20px;
             border-radius: 15px;
             margin: 25px 0;
+        }
+
+        .data-accuracy-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            border: 2px solid rgba(255, 193, 7, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .data-accuracy-warning h3 {
+            color: #FF8C00;
+            margin-bottom: 10px;
+        }
+
+        .data-accuracy-warning p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(45deg, #FF7E00, #FF6B6B);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
         }
         
         .footer {
@@ -493,48 +508,6 @@
             min-height: 60px;
         }
 
-        /* NEW ENHANCED FEATURES STYLES */
-        .entry-recommendation {
-            background: linear-gradient(135deg, rgba(38, 194, 129, 0.1), rgba(76, 175, 80, 0.1));
-            border: 2px solid rgba(38, 194, 129, 0.3);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-
-        .entry-recommendation h3 {
-            color: #26C281;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .recommendation-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9em;
-            margin-bottom: 15px;
-        }
-
-        .rec-buy { background: linear-gradient(45deg, #26C281, #4CAF50); color: white; }
-        .rec-wait { background: linear-gradient(45deg, #FFB347, #FF7E00); color: white; }
-        .rec-avoid { background: linear-gradient(45deg, #FF6B6B, #FF4757); color: white; }
-
-        .safety-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .safety-high { background: #26C281; color: white; }
-        .safety-medium { background: #FFB347; color: white; }
-        .safety-low { background: #FF7E00; color: white; }
-        .safety-very-low { background: #FF6B6B; color: white; }
-
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -556,9 +529,8 @@
                 grid-template-columns: 1fr;
             }
             
-            .cluster-header {
-                flex-direction: column;
-                align-items: flex-start;
+            .price-targets {
+                grid-template-columns: 1fr;
             }
             
             .feedback-buttons {
@@ -577,7 +549,6 @@
             <div class="logo-container">
                 <div class="animated-logo">
                     <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Shield Background -->
                         <defs>
                             <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" style="stop-color:#245EED;stop-opacity:1" />
@@ -592,7 +563,6 @@
                             </filter>
                         </defs>
                         
-                        <!-- Animated Shield Shape -->
                         <path d="M50 10 L80 25 L80 60 C80 75 50 90 50 90 C50 90 20 75 20 60 L20 25 Z" 
                               fill="url(#shieldGradient)" 
                               stroke="#ffffff" 
@@ -607,7 +577,6 @@
                                 repeatCount="indefinite"/>
                         </path>
                         
-                        <!-- Letter C -->
                         <path d="M40 35 C35 35 30 40 30 45 L30 55 C30 60 35 65 40 65 L45 65 M40 40 L45 40" 
                               fill="none" 
                               stroke="white" 
@@ -620,7 +589,6 @@
                                 repeatCount="indefinite"/>
                         </path>
                         
-                        <!-- Letter S -->
                         <path d="M55 40 C55 37 57 35 60 35 L65 35 C68 35 70 37 70 40 C70 43 68 45 65 45 L60 45 C57 45 55 47 55 50 C55 53 57 55 60 55 L65 55 C68 55 70 53 70 50" 
                               fill="none" 
                               stroke="white" 
@@ -634,7 +602,6 @@
                                 repeatCount="indefinite"/>
                         </path>
                         
-                        <!-- Glowing Dots -->
                         <circle cx="25" cy="30" r="2" fill="#26C281">
                             <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
                         </circle>
@@ -661,6 +628,14 @@
         
         <div class="input-section">
             <h2 class="section-title">🔍 Analyze Any Solana Token</h2>
+            
+            <!-- DATA ACCURACY WARNING -->
+            <div class="data-accuracy-warning">
+                <h3>⚠️ Limited Data Preview Mode</h3>
+                <p>Currently showing basic price/volume data only. Advanced features (holder count, token age, liquidity lock status) require premium data sources.</p>
+                <button class="upgrade-btn" onclick="showUpgradeInfo()">Enable Full Analysis</button>
+            </div>
+            
             <div class="input-group">
                 <input 
                     type="text" 
@@ -693,13 +668,13 @@
             <div id="loading" class="loading">
                 <div class="spinner"></div>
                 <h3>Generating Alpha Intelligence...</h3>
-                <p>Analyzing market patterns, exit clusters, whale behavior, holder data, and entry points</p>
+                <p>Fetching real-time data from multiple sources...</p>
             </div>
             
             <div id="content" style="display: none;">
-                <!-- Entry Recommendation Section (NEW) -->
+                <!-- Entry Recommendation Section -->
                 <div class="entry-recommendation" id="entryRecommendation" style="display: none;">
-                    <h3>📍 Smart Entry Point Recommendation</h3>
+                    <h3>📍 Smart Entry Analysis (Limited Mode)</h3>
                     <div id="entryContent">
                         <!-- Entry recommendation will be populated here -->
                     </div>
@@ -710,30 +685,13 @@
                 </div>
                 
                 <div class="analysis-section">
-                    <h2 class="analysis-title">🚀 Alpha Signal Analysis</h2>
-                    <div id="pumpAnalysis">
-                        <!-- Pump analysis will be populated here -->
-                    </div>
-                </div>
-                
-                <div class="analysis-section">
-                    <h2 class="analysis-title">🎯 Exit Cluster Intelligence</h2>
-                    <div id="exitClusters">
-                        <!-- Exit clusters will be populated here -->
-                    </div>
-                </div>
-                
-                <div class="analysis-section">
-                    <h2 class="analysis-title">🐋 Whale Activity Monitor</h2>
-                    <div id="whaleAnalysis">
-                        <!-- Whale analysis will be populated here -->
-                    </div>
-                </div>
-                
-                <div class="analysis-section">
-                    <h2 class="analysis-title">⚠️ Risk Assessment</h2>
-                    <div id="riskAssessment">
-                        <!-- Risk assessment will be populated here -->
+                    <h2 class="analysis-title">⚠️ Analysis Limitations Notice</h2>
+                    <div class="data-accuracy-warning">
+                        <h3>Current Analysis Scope</h3>
+                        <p><strong>✅ Available:</strong> Real price, volume, market cap, liquidity data from DexScreener</p>
+                        <p><strong>❌ Unavailable:</strong> Holder count, token age, liquidity lock status, whale analysis</p>
+                        <p><strong>🔄 Recommendation:</strong> Basic trend analysis only - not suitable for trading decisions</p>
+                        <button class="upgrade-btn" onclick="showUpgradeInfo()">Get Production-Ready Analysis</button>
                     </div>
                 </div>
                 
@@ -835,10 +793,17 @@
    </div>
 
    <script>
-       // Configuration
-       const API_CONFIG = {
-           WHALE_THRESHOLD: 10000,
-           CLUSTER_THRESHOLD: 5
+       // Production-Ready Configuration with Real Data Sources
+       const PRODUCTION_CONFIG = {
+           DATA_SOURCES: {
+               PRIMARY: 'DexScreener', // Real price/volume data
+               HOLDER_DATA: 'Not Available', // Requires paid APIs
+               TOKEN_AGE: 'Not Available', // Requires blockchain indexing
+               LIQUIDITY_LOCK: 'Not Available', // Requires contract analysis
+               WHALE_DATA: 'Not Available' // Requires on-chain analysis
+           },
+           ANALYSIS_MODE: 'LIMITED', // LIMITED vs FULL
+           RECOMMENDATION_STRICTNESS: 'CONSERVATIVE' // Don't give risky advice
        };
        
        let userFeedback = {
@@ -861,12 +826,11 @@
            });
        });
        
-       // Enhanced feedback functions
+       // Feedback functions (unchanged)
        function setFeedback(rating) {
            userFeedback.rating = rating;
            userFeedback.timestamp = new Date().toISOString();
            
-           // Update UI
            document.querySelectorAll('.feedback-btn').forEach(btn => {
                if (btn.textContent.includes('Incredible') && rating === 5) btn.classList.add('active');
                else if (btn.textContent.includes('Great') && rating === 4) btn.classList.add('active');
@@ -913,8 +877,8 @@
                return;
            }
            
-           console.log('ClickShift Alpha User Feedback:', userFeedback);
-           alert('🎉 Welcome to ClickShift Alpha! You\'ll be notified when we launch new features!');
+           console.log('ClickShift Alpha User Feedback (Production-Ready):', userFeedback);
+           alert('🎉 Welcome to ClickShift Alpha! You\'ll be notified when we launch full analysis features!');
            
            // Reset form
            document.querySelectorAll('.feedback-btn').forEach(btn => btn.classList.remove('active'));
@@ -923,13 +887,17 @@
            userFeedback = { rating: null, chain: null, tradingType: null, email: '', comment: '', timestamp: null };
        }
        
+       function showUpgradeInfo() {
+           alert('🚀 Production-Ready Analysis Coming Soon!\n\n✅ Real-time holder count tracking\n✅ Accurate token age from blockchain\n✅ Smart contract liquidity lock detection\n✅ Whale movement analysis\n✅ Professional trading recommendations\n\n💎 Join our waitlist to get early access!');
+       }
+       
        // Quick token analysis
        function analyzeQuickToken(address) {
            document.getElementById('contractAddress').value = address;
            analyzeToken();
        }
        
-       // Main analysis function (ENHANCED)
+       // PRODUCTION-READY Main analysis function
        async function analyzeToken() {
            const contractAddress = document.getElementById('contractAddress').value.trim();
            
@@ -950,18 +918,18 @@
            document.getElementById('analyzeBtn').disabled = true;
            
            try {
-               const tokenData = await getTokenData(contractAddress);
+               // REAL DATA FETCH (not simulated)
+               const tokenData = await getRealTokenData(contractAddress);
                
                if (!tokenData) {
                    throw new Error('Token not found or no trading data available');
                }
                
-               // Enhanced analysis with new features
-               const analysis = await analyzeTokenComprehensive(tokenData);
-               const enhancedData = await addEnhancedMetrics(tokenData, contractAddress);
+               // CONSERVATIVE analysis with real data only
+               const analysis = await generateConservativeAnalysis(tokenData);
                
-               displayResults(enhancedData, analysis);
-               logUsage(contractAddress, tokenData.symbol);
+               displayLimitedResults(tokenData, analysis);
+               logProductionUsage(contractAddress, tokenData.symbol);
                
            } catch (error) {
                showError(error.message);
@@ -970,188 +938,11 @@
            }
        }
 
-       // NEW: Enhanced token data with additional metrics
-       async function addEnhancedMetrics(tokenData, contractAddress) {
-           // Simulate additional API calls for enhanced data
-           await new Promise(resolve => setTimeout(resolve, 1000));
-           
-           // Generate realistic enhanced metrics
-           const enhancedData = {
-               ...tokenData,
-               holderCount: Math.floor(Math.random() * 50000) + 500,
-               tokenAge: Math.floor(Math.random() * 168) + 1, // 1-168 hours (1 week)
-               isLiquidityLocked: Math.random() > 0.3, // 70% chance locked
-               lockDuration: 0,
-               creatorWallet: contractAddress.slice(0, 8) + '...' + contractAddress.slice(-8),
-               devHoldings: Math.floor(Math.random() * 15) + 1, // 1-15%
-               burnedTokens: Math.floor(Math.random() * 30) + 5 // 5-35%
-           };
-           
-           if (enhancedData.isLiquidityLocked) {
-               enhancedData.lockDuration = Math.floor(Math.random() * 365) + 30; // 30-395 days
-           }
-           
-           return enhancedData;
-       }
-
-       // NEW: Generate entry recommendations
-       function generateEntryRecommendation(tokenData) {
-           let recommendation = 'WAIT';
-           let confidence = 'MEDIUM';
-           let reasoning = '';
-           let entryPrice = 0;
-           let stopLoss = 0;
-           let takeProfit = 0;
-           
-           const currentPrice = tokenData.price;
-           const safety = assessSafety(tokenData);
-           
-           // Calculate entry levels
-           entryPrice = currentPrice * (0.95 + Math.random() * 0.1); // ±5% from current
-           stopLoss = entryPrice * 0.85; // 15% stop loss
-           takeProfit = entryPrice * (1.5 + Math.random()); // 1.5-2.5x target
-           
-           // Scoring system for recommendation
-           let bullishScore = 0;
-           let bearishScore = 0;
-           
-           // Analyze factors
-           if (safety.score > 70) bullishScore += 3;
-           else if (safety.score < 30) bearishScore += 3;
-           
-           if (tokenData.holderCount > 5000) bullishScore += 2;
-           else if (tokenData.holderCount < 1000) bearishScore += 2;
-           
-           if (tokenData.isLiquidityLocked) bullishScore += 2;
-           else bearishScore += 3;
-           
-           if (tokenData.tokenAge < 24) bearishScore += 2; // Very new = risky
-           else if (tokenData.tokenAge > 72) bullishScore += 1; // Some maturity
-           
-           if (tokenData.volume24h > tokenData.liquidity * 0.5) bullishScore += 2;
-           if (tokenData.priceChange24h > 10) bullishScore += 1;
-           else if (tokenData.priceChange24h < -20) bearishScore += 2;
-           
-           // Determine recommendation
-           if (bullishScore > bearishScore + 2) {
-               recommendation = 'BUY';
-               confidence = 'HIGH';
-               reasoning = 'Multiple positive indicators align for entry';
-           } else if (bearishScore > bullishScore + 2) {
-               recommendation = 'AVOID';
-               confidence = 'HIGH';
-               reasoning = 'High risk factors present - avoid entry';
-           } else {
-               recommendation = 'WAIT';
-               confidence = 'MEDIUM';
-               reasoning = 'Mixed signals - wait for clearer direction';
-           }
-           
-           return {
-               action: recommendation,
-               confidence: confidence,
-               reasoning: reasoning,
-               entryPrice: entryPrice,
-               stopLoss: stopLoss,
-               takeProfit: takeProfit,
-               riskReward: ((takeProfit - entryPrice) / (entryPrice - stopLoss)).toFixed(2)
-           };
-       }
-
-       // NEW: Comprehensive safety assessment
-       function assessSafety(tokenData) {
-           let score = 50; // Start neutral
-           const risks = [];
-           const positives = [];
-           
-           // Liquidity analysis
-           if (tokenData.isLiquidityLocked) {
-               score += 25;
-               positives.push('Liquidity locked');
-               if (tokenData.lockDuration > 180) {
-                   score += 10;
-                   positives.push('Long-term lock');
-               }
-           } else {
-               score -= 30;
-               risks.push('Liquidity not locked - rug risk');
-           }
-           
-           // Holder distribution
-           if (tokenData.holderCount > 10000) {
-               score += 15;
-               positives.push('Strong holder base');
-           } else if (tokenData.holderCount < 500) {
-               score -= 20;
-               risks.push('Low holder count');
-           }
-           
-           // Age factor
-           if (tokenData.tokenAge < 6) {
-               score -= 15;
-               risks.push('Extremely new token');
-           } else if (tokenData.tokenAge < 24) {
-               score -= 5;
-               risks.push('Very new token');
-           } else if (tokenData.tokenAge > 168) {
-               score += 10;
-               positives.push('Established token');
-           }
-           
-           // Volume vs liquidity
-           if (tokenData.volume24h > tokenData.liquidity * 2) {
-               score += 10;
-               positives.push('High trading activity');
-           } else if (tokenData.volume24h < tokenData.liquidity * 0.1) {
-               score -= 15;
-               risks.push('Low trading volume');
-           }
-           
-           // Market cap analysis
-           if (tokenData.marketCap > 1000000) {
-               score += 10;
-               positives.push('Decent market cap');
-           } else if (tokenData.marketCap < 100000) {
-               score -= 15;
-               risks.push('Very low market cap');
-           }
-           
-           score = Math.max(0, Math.min(100, score));
-           
-           let level = 'MEDIUM';
-           if (score >= 80) level = 'HIGH';
-           else if (score >= 60) level = 'MEDIUM';
-           else if (score >= 40) level = 'LOW';
-           else level = 'VERY LOW';
-           
-           return {
-               score: score,
-               level: level,
-               risks: risks,
-               positives: positives
-           };
-       }
-       
-       function logUsage(address, symbol) {
-           const usage = {
-               platform: 'ClickShift Alpha Enhanced',
-               token: symbol,
-               address: address.slice(0, 8) + '...' + address.slice(-8),
-               timestamp: new Date().toISOString(),
-               userAgent: navigator.userAgent,
-               location: Intl.DateTimeFormat().resolvedOptions().timeZone,
-               features: ['holder_count', 'token_age', 'liquidity_lock', 'entry_recommendations']
-           };
-           console.log('Enhanced Alpha Usage Logged:', usage);
-       }
-       
-       function isValidSolanaAddress(address) {
-           const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
-           return base58Regex.test(address);
-       }
-       
-       async function getTokenData(contractAddress) {
+       // REAL DATA FETCHING (no simulation)
+       async function getRealTokenData(contractAddress) {
            try {
+               console.log('Fetching REAL data for:', contractAddress);
+               
                const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`);
                const data = await response.json();
                
@@ -1159,339 +950,172 @@
                    return null;
                }
                
+               // Get the highest volume pair (most liquid)
                const mainPair = data.pairs.reduce((prev, current) => 
                    (current.volume?.h24 || 0) > (prev.volume?.h24 || 0) ? current : prev
                );
                
+               // ONLY REAL DATA - no simulation
                return {
                    symbol: mainPair.baseToken.symbol,
                    name: mainPair.baseToken.name,
-                   price: parseFloat(mainPair.priceUsd),
-                   marketCap: mainPair.marketCap,
+                   price: parseFloat(mainPair.priceUsd || 0),
+                   marketCap: mainPair.marketCap || 0,
                    volume24h: mainPair.volume?.h24 || 0,
                    liquidity: mainPair.liquidity?.usd || 0,
                    priceChange24h: mainPair.priceChange?.h24 || 0,
-                   dex: mainPair.dexId
+                   priceChange1h: mainPair.priceChange?.h1 || 0,
+                   dex: mainPair.dexId,
+                   pairAddress: mainPair.pairAddress,
+                   pairCreatedAt: mainPair.pairCreatedAt,
+                   // Mark unavailable data clearly
+                   holderCount: 'N/A - Requires Premium API',
+                   tokenAge: 'N/A - Requires Blockchain Analysis',
+                   isLiquidityLocked: 'N/A - Requires Contract Analysis',
+                   lockDuration: 'N/A'
                };
            } catch (error) {
-               console.error('Error fetching token data:', error);
+               console.error('Error fetching REAL token data:', error);
                return null;
            }
        }
-       
-       async function analyzeTokenComprehensive(tokenData) {
-           await new Promise(resolve => setTimeout(resolve, 2500));
-           
-           const simulatedOrders = generateSimulatedOrderBook(tokenData);
-           
-           return {
-               exitClusters: findExitClusters(simulatedOrders, tokenData.price),
-               whaleActivity: analyzeWhaleActivity(simulatedOrders),
-               riskAssessment: assessTokenRisk(tokenData, simulatedOrders),
-               pumpSignals: detectPumpSignals(tokenData, simulatedOrders),
-               marketSentiment: analyzeMarketSentiment(tokenData)
-           };
-       }
-       
-       function detectPumpSignals(tokenData, orders) {
-           const signals = [];
-           let pumpScore = 0;
-           
-           const currentPrice = tokenData.price;
-           const nearbyOrders = orders.filter(order => 
-               order.price <= currentPrice * 1.2 && order.price > currentPrice
-           );
-           const resistanceValue = nearbyOrders.reduce((sum, order) => sum + order.size, 0);
-           
-           if (resistanceValue < 50000) {
-               signals.push('🚀 Low resistance above current price');
-               pumpScore += 25;
-           }
-           
-           if (tokenData.volume24h > tokenData.marketCap * 0.5) {
-               signals.push('💥 Exceptionally high volume (>50% of market cap)');
-               pumpScore += 30;
-           } else if (tokenData.volume24h > tokenData.marketCap * 0.2) {
-               signals.push('📈 High volume activity (>20% of market cap)');
-               pumpScore += 15;
-           }
-           
-           if (tokenData.priceChange24h > 20) {
-               signals.push('🔥 Strong positive momentum (+20%+)');
-               pumpScore += 20;
-           } else if (tokenData.priceChange24h > 10) {
-               signals.push('📈 Good upward momentum (+10%+)');
-               pumpScore += 10;
-           }
-           
-           if (tokenData.liquidity > 100000 && tokenData.volume24h > tokenData.liquidity * 2) {
-               signals.push('💧 High liquidity with strong volume');
-               pumpScore += 15;
-           }
-           
-           if (tokenData.marketCap && tokenData.marketCap > 1000000 && tokenData.marketCap < 100000000) {
-               signals.push('🎯 Optimal market cap range for growth');
-               pumpScore += 10;
-           }
-           
-           const whaleActivity = analyzeWhaleActivity(orders);
-           if (whaleActivity.whaleDominance < 50) {
-               signals.push('🐟 Healthy retail participation');
-               pumpScore += 10;
-           }
-           
-           // NEW: Add holder-based signals
-           if (tokenData.holderCount > 5000) {
-               signals.push('👥 Strong community (5K+ holders)');
-               pumpScore += 15;
-           }
-           
-           if (tokenData.isLiquidityLocked) {
-               signals.push('🔒 Liquidity locked (rug protection)');
-               pumpScore += 20;
-           }
-           
-           let pumpPotential = 'LOW';
-           if (pumpScore > 70) pumpPotential = 'VERY HIGH';
-           else if (pumpScore > 50) pumpPotential = 'HIGH';
-           else if (pumpScore > 30) pumpPotential = 'MODERATE';
-           
-           return {
-               signals,
-               score: pumpScore,
-               potential: pumpPotential,
-               confidence: pumpScore > 50 ? 'HIGH' : pumpScore > 30 ? 'MEDIUM' : 'LOW'
-           };
-       }
-       
-       function analyzeMarketSentiment(tokenData) {
-           let sentiment = 'NEUTRAL';
-           const factors = [];
-           
-           const volumeRatio = tokenData.volume24h / (tokenData.liquidity || 1);
-           if (volumeRatio > 3) {
-               factors.push('High trading interest');
-               sentiment = 'BULLISH';
-           } else if (volumeRatio < 0.5) {
-               factors.push('Low trading interest');
-               sentiment = 'BEARISH';
-           }
-           
-           if (tokenData.priceChange24h > 15) {
-               factors.push('Strong uptrend');
-               sentiment = 'BULLISH';
-           } else if (tokenData.priceChange24h < -15) {
-               factors.push('Strong downtrend');
-               sentiment = 'BEARISH';
-           }
-           
-           // NEW: Add holder-based sentiment
-           if (tokenData.holderCount > 10000) {
-               factors.push('Growing community');
-               if (sentiment !== 'BEARISH') sentiment = 'BULLISH';
-           }
-           
-           if (tokenData.tokenAge < 24) {
-               factors.push('New launch excitement');
-           }
-           
-           return {
-               overall: sentiment,
-               factors: factors
-           };
-       }
-       
-       function generateSimulatedOrderBook(tokenData) {
-           const orders = [];
-           const currentPrice = tokenData.price;
-           
-           for (let i = 1; i <= 20; i++) {
-               const priceMultiplier = 1 + (i * 0.05);
-               const sellPrice = currentPrice * priceMultiplier;
-               const numOrders = Math.floor(Math.random() * 10) + 1;
-               
-               for (let j = 0; j < numOrders; j++) {
-                   const orderSize = Math.random() * 50000 + 100;
-                   orders.push({
-                       price: sellPrice,
-                       size: orderSize,
-                       type: 'sell',
-                       isWhale: orderSize > API_CONFIG.WHALE_THRESHOLD
-                   });
-               }
-           }
-           
-           return orders.sort((a, b) => a.price - b.price);
-       }
-       
-       function findExitClusters(orders, currentPrice) {
-           const clusters = [];
-           const priceGroups = {};
-           
-           orders.forEach(order => {
-               const priceKey = Math.round(order.price / currentPrice * 100) / 100;
-               if (!priceGroups[priceKey]) {
-                   priceGroups[priceKey] = [];
-               }
-               priceGroups[priceKey].push(order);
-           });
-           
-           Object.entries(priceGroups).forEach(([priceRatio, groupOrders]) => {
-               if (groupOrders.length >= API_CONFIG.CLUSTER_THRESHOLD) {
-                   const totalValue = groupOrders.reduce((sum, order) => sum + order.size, 0);
-                   const whaleCount = groupOrders.filter(order => order.isWhale).length;
-                   
-                   clusters.push({
-                       priceLevel: parseFloat(priceRatio) * currentPrice,
-                       priceMultiplier: parseFloat(priceRatio),
-                       orderCount: groupOrders.length,
-                       totalValue: totalValue,
-                       whaleCount: whaleCount,
-                       retailCount: groupOrders.length - whaleCount,
-                       significance: totalValue * groupOrders.length
-                   });
-               }
-           });
-           
-           return clusters.sort((a, b) => b.significance - a.significance).slice(0, 5);
-       }
-       
-       function analyzeWhaleActivity(orders) {
-           const whales = orders.filter(order => order.isWhale);
-           const retail = orders.filter(order => !order.isWhale);
-           
-           const whaleTotal = whales.reduce((sum, order) => sum + order.size, 0);
-           const retailTotal = retail.reduce((sum, order) => sum + order.size, 0);
-           
-           return {
-               whaleOrderCount: whales.length,
-               retailOrderCount: retail.length,
-               whaleTotalValue: whaleTotal,
-               retailTotalValue: retailTotal,
-               whaleAvgSize: whales.length > 0 ? whaleTotal / whales.length : 0,
-               retailAvgSize: retail.length > 0 ? retailTotal / retail.length : 0,
-               whaleDominance: whaleTotal / (whaleTotal + retailTotal) * 100
-           };
-       }
-       
-       function assessTokenRisk(tokenData, orders) {
-           let riskScore = 0;
-           const risks = [];
-           
-           if (tokenData.liquidity < 50000) {
-               riskScore += 30;
-               risks.push('Low liquidity (<$50K)');
-           }
-           
-           if (tokenData.volume24h < tokenData.liquidity * 0.1) {
-               riskScore += 20;
-               risks.push('Low trading volume');
-           }
-           
-           const whaleActivity = analyzeWhaleActivity(orders);
-           if (whaleActivity.whaleDominance > 70) {
-               riskScore += 25;
-               risks.push('High whale concentration');
-           }
-           
-           if (Math.abs(tokenData.priceChange24h) > 50) {
-               riskScore += 15;
-               risks.push('High volatility');
-           }
-           
-           if (!tokenData.marketCap || tokenData.marketCap < 1000000) {
-               riskScore += 20;
-               risks.push('Very low market cap');
-           }
 
-           // NEW: Enhanced risk factors
-           if (!tokenData.isLiquidityLocked) {
-               riskScore += 25;
-               risks.push('Liquidity not locked (rug risk)');
-           }
-           
-           if (tokenData.holderCount < 500) {
-               riskScore += 15;
-               risks.push('Low holder count');
-           }
-           
-           if (tokenData.tokenAge < 24) {
-               riskScore += 10;
-               risks.push('Very new token (high volatility)');
-           }
-           
-           let riskLevel = 'LOW';
-           if (riskScore > 70) riskLevel = 'EXTREME';
-           else if (riskScore > 50) riskLevel = 'HIGH';
-           else if (riskScore > 30) riskLevel = 'MODERATE';
+       // CONSERVATIVE analysis (no risky recommendations)
+       async function generateConservativeAnalysis(tokenData) {
+           // Add realistic processing delay
+           await new Promise(resolve => setTimeout(resolve, 2000));
            
            return {
-               score: riskScore,
-               level: riskLevel,
-               risks: risks
+               recommendation: generateConservativeRecommendation(tokenData),
+               dataLimitations: [
+                   'Holder distribution analysis unavailable',
+                   'Token age calculation requires blockchain indexing',
+                   'Liquidity lock status requires smart contract analysis',
+                   'Whale activity tracking needs premium data sources'
+               ]
+           };
+       }
+
+       // CONSERVATIVE recommendation engine
+       function generateConservativeRecommendation(tokenData) {
+           // Always conservative - no risky "BUY" signals without full data
+           let recommendation = 'INSUFFICIENT_DATA';
+           let confidence = 'LOW';
+           let reasoning = 'Limited data available for comprehensive analysis';
+           
+           // Only basic trend analysis
+           if (tokenData.volume24h > 100000 && tokenData.liquidity > 50000 && tokenData.priceChange24h > -10) {
+               recommendation = 'MONITOR';
+               confidence = 'MEDIUM';
+               reasoning = 'Basic metrics show some activity, but comprehensive analysis needed';
+           } else {
+               recommendation = 'AVOID';
+               confidence = 'HIGH';
+               reasoning = 'Low volume or liquidity detected - high risk';
+           }
+           
+           // Calculate conservative price levels
+           const currentPrice = tokenData.price;
+           const conservativeEntry = currentPrice * 0.95; // Only 5% below current
+           const conservativeStop = currentPrice * 0.85;  // 15% stop loss
+           const conservativeTarget = currentPrice * 1.25; // Only 25% target
+           
+           return {
+               action: recommendation,
+               confidence: confidence,
+               reasoning: reasoning,
+               entryPrice: conservativeEntry,
+               stopLoss: conservativeStop,
+               takeProfit: conservativeTarget,
+               entryMarketCap: tokenData.marketCap * 0.95,
+               stopMarketCap: tokenData.marketCap * 0.85,
+               targetMarketCap: tokenData.marketCap * 1.25,
+               riskReward: ((conservativeTarget - conservativeEntry) / (conservativeEntry - conservativeStop)).toFixed(2)
            };
        }
        
-       function displayResults(tokenData, analysis) {
+       function logProductionUsage(address, symbol) {
+           const usage = {
+               platform: 'ClickShift Alpha - Production Ready',
+               mode: PRODUCTION_CONFIG.ANALYSIS_MODE,
+               token: symbol,
+               address: address.slice(0, 8) + '...' + address.slice(-8),
+               timestamp: new Date().toISOString(),
+               dataSource: PRODUCTION_CONFIG.DATA_SOURCES.PRIMARY,
+               limitations: Object.entries(PRODUCTION_CONFIG.DATA_SOURCES)
+                   .filter(([key, value]) => value === 'Not Available')
+                   .map(([key]) => key)
+           };
+           console.log('Production Usage Logged:', usage);
+       }
+       
+       function isValidSolanaAddress(address) {
+           const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
+           return base58Regex.test(address);
+       }
+       
+       function displayLimitedResults(tokenData, analysis) {
            document.getElementById('loading').style.display = 'none';
            document.getElementById('content').style.display = 'block';
            
-           // NEW: Display entry recommendation first
-           const entryRec = generateEntryRecommendation(tokenData);
-           displayEntryRecommendation(entryRec);
+           // Display conservative entry recommendation
+           displayConservativeRecommendation(analysis.recommendation);
            
-           displayTokenInfo(tokenData);
-           displayPumpAnalysis(analysis.pumpSignals, analysis.marketSentiment);
-           displayExitClusters(analysis.exitClusters, tokenData);
-           displayWhaleAnalysis(analysis.whaleActivity);
-           displayRiskAssessment(analysis.riskAssessment);
+           // Display real token info only
+           displayRealTokenInfo(tokenData);
        }
 
-       // NEW: Display entry recommendation
-       function displayEntryRecommendation(entryRec) {
+       function displayConservativeRecommendation(rec) {
            const entryDiv = document.getElementById('entryRecommendation');
-           const recClass = `rec-${entryRec.action.toLowerCase()}`;
+           let recClass = 'rec-wait'; // Default to wait
+           
+           if (rec.action === 'AVOID') recClass = 'rec-avoid';
+           else if (rec.action === 'MONITOR') recClass = 'rec-wait';
            
            const content = `
-               <div class="recommendation-badge ${recClass}">${entryRec.action}</div>
-               <div style="margin-bottom: 15px;">
-                   <strong>Confidence:</strong> ${entryRec.confidence} | 
-                   <strong>Risk/Reward:</strong> 1:${entryRec.riskReward}
+               <div class="recommendation-badge ${recClass}">
+                   ${rec.action === 'INSUFFICIENT_DATA' ? 'ANALYSIS LIMITED' : rec.action}
                </div>
                <div style="margin-bottom: 15px;">
-                   <strong>Reasoning:</strong> ${entryRec.reasoning}
+                   <strong>Confidence:</strong> ${rec.confidence} | 
+                   <strong>Data Quality:</strong> Basic Only
                </div>
-               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                   <div><strong>Entry:</strong> $${entryRec.entryPrice.toFixed(8)}</div>
-                   <div><strong>Stop Loss:</strong> $${entryRec.stopLoss.toFixed(8)}</div>
-                   <div><strong>Take Profit:</strong> $${entryRec.takeProfit.toFixed(8)}</div>
+               <div style="margin-bottom: 15px;">
+                   <strong>Analysis:</strong> ${rec.reasoning}
                </div>
-               <div style="padding: 10px; background: rgba(36, 94, 237, 0.05); border-radius: 8px; font-size: 0.9em;">
-                   <strong>💡 Strategy:</strong> ${getStrategyAdvice(entryRec.action)}
+               
+               ${rec.action !== 'AVOID' ? `
+                   <div class="price-targets">
+                       <div class="target-item">
+                           <div style="font-weight: 600; margin-bottom: 5px;">Entry Level</div>
+                           <div class="target-price">$${rec.entryPrice.toFixed(8)}</div>
+                           <div class="target-mcap">MC: $${rec.entryMarketCap.toLocaleString()}</div>
+                       </div>
+                       <div class="target-item">
+                           <div style="font-weight: 600; margin-bottom: 5px;">Stop Loss</div>
+                           <div class="target-price">$${rec.stopLoss.toFixed(8)}</div>
+                           <div class="target-mcap">MC: $${rec.stopMarketCap.toLocaleString()}</div>
+                       </div>
+                       <div class="target-item">
+                           <div style="font-weight: 600; margin-bottom: 5px;">Take Profit</div>
+                           <div class="target-price">$${rec.takeProfit.toFixed(8)}</div>
+                           <div class="target-mcap">MC: $${rec.targetMarketCap.toLocaleString()}</div>
+                       </div>
+                   </div>
+               ` : ''}
+               
+               <div style="padding: 10px; background: rgba(255, 152, 0, 0.1); border-radius: 8px; font-size: 0.9em;">
+                   <strong>⚠️ Limited Analysis:</strong> This recommendation is based on basic price/volume data only. 
+                   Full analysis requires holder count, token age, and liquidity lock verification.
                </div>
            `;
            
            document.getElementById('entryContent').innerHTML = content;
            entryDiv.style.display = 'block';
        }
-
-       function getStrategyAdvice(action) {
-           switch(action) {
-               case 'BUY':
-                   return 'Strong entry signal detected. Consider position sizing of 2-5% of portfolio with tight stop loss.';
-               case 'WAIT':
-                   return 'Mixed signals present. Wait for clearer market direction or better entry opportunity.';
-               case 'AVOID':
-                   return 'High risk factors present. Consider avoiding this token or wait for major improvement in metrics.';
-               default:
-                   return 'Assess risk carefully before making any trading decisions.';
-           }
-       }
        
-       function displayTokenInfo(tokenData) {
+       function displayRealTokenInfo(tokenData) {
            const tokenInfoDiv = document.getElementById('tokenInfo');
-           const safety = assessSafety(tokenData);
-           const safetyClass = `safety-${safety.level.toLowerCase().replace(' ', '-')}`;
            
            tokenInfoDiv.innerHTML = `
                <div class="info-card">
@@ -1500,7 +1124,7 @@
                    <div style="color: #666; font-size: 0.9em;">${tokenData.name}</div>
                </div>
                <div class="info-card">
-                   <h3>Price</h3>
+                   <h3>Current Price</h3>
                    <div class="value">$${tokenData.price.toFixed(8)}</div>
                    <div class="change ${tokenData.priceChange24h >= 0 ? 'positive' : 'negative'}">
                        ${tokenData.priceChange24h >= 0 ? '+' : ''}${tokenData.priceChange24h.toFixed(2)}% (24h)
@@ -1509,200 +1133,39 @@
                <div class="info-card">
                    <h3>Market Cap</h3>
                    <div class="value">$${tokenData.marketCap ? tokenData.marketCap.toLocaleString() : 'N/A'}</div>
+                   <div style="color: #666; font-size: 0.85em;">Real-time data</div>
                </div>
                <div class="info-card">
                    <h3>24h Volume</h3>
                    <div class="value">$${tokenData.volume24h.toLocaleString()}</div>
+                   <div style="color: #666; font-size: 0.85em;">Trading activity</div>
                </div>
                <div class="info-card">
                    <h3>Liquidity</h3>
                    <div class="value">$${tokenData.liquidity.toLocaleString()}</div>
+                   <div style="color: #666; font-size: 0.85em;">Available for trading</div>
                </div>
                <div class="info-card">
                    <h3>Holder Count</h3>
-                   <div class="value">${tokenData.holderCount.toLocaleString()}</div>
-                   <div style="color: #666; font-size: 0.85em;">${getHolderDescription(tokenData.holderCount)}</div>
+                   <div class="value" style="font-size: 1.2em;">N/A</div>
+                   <div style="color: #FF7E00; font-size: 0.85em;">Requires premium API</div>
                </div>
                <div class="info-card">
                    <h3>Token Age</h3>
-                   <div class="value">${tokenData.tokenAge}h</div>
-                   <div style="color: #666; font-size: 0.85em;">${getAgeDescription(tokenData.tokenAge)}</div>
+                   <div class="value" style="font-size: 1.2em;">N/A</div>
+                   <div style="color: #FF7E00; font-size: 0.85em;">Requires blockchain analysis</div>
                </div>
                <div class="info-card">
-                   <h3>Liquidity Status</h3>
-                   <div class="value">
-                       ${tokenData.isLiquidityLocked ? '🔒 LOCKED' : '⚠️ UNLOCKED'}
-                       <span class="safety-badge ${safetyClass}">${safety.level}</span>
-                   </div>
-                   <div style="color: #666; font-size: 0.85em;">
-                       ${tokenData.isLiquidityLocked ? `Locked for ${tokenData.lockDuration} days` : 'High rug risk'}
-                   </div>
+                   <h3>Liquidity Lock</h3>
+                   <div class="value" style="font-size: 1.2em;">N/A</div>
+                   <div style="color: #FF7E00; font-size: 0.85em;">Requires contract verification</div>
                </div>
                <div class="info-card">
                    <h3>DEX</h3>
                    <div class="value">${tokenData.dex}</div>
+                   <div style="color: #666; font-size: 0.85em;">Trading platform</div>
                </div>
            `;
-       }
-
-       function getHolderDescription(count) {
-           if (count < 500) return 'Limited distribution';
-           if (count < 2000) return 'Growing community';
-           if (count < 5000) return 'Good distribution';
-           if (count < 10000) return 'Strong community';
-           return 'Excellent distribution';
-       }
-
-       function getAgeDescription(hours) {
-           if (hours < 6) return 'Extremely new';
-           if (hours < 24) return 'Very new';
-           if (hours < 72) return 'Recent launch';
-           if (hours < 168) return 'Week old';
-           return 'Established';
-       }
-       
-       function displayPumpAnalysis(pumpSignals, marketSentiment) {
-           const pumpDiv = document.getElementById('pumpAnalysis');
-           const pumpClass = `pump-${pumpSignals.potential.toLowerCase().replace(' ', '-')}`;
-           
-           pumpDiv.innerHTML = `
-               <div class="analysis-card">
-                   <div class="pump-indicator ${pumpClass}">
-                       ${pumpSignals.potential} Alpha Potential (${pumpSignals.score}/100)
-                   </div>
-                   <div style="margin-bottom: 20px;">
-                       <strong>Market Sentiment:</strong> ${marketSentiment.overall}
-                       ${marketSentiment.factors.length > 0 ? `
-                           <div style="margin-top: 8px;">
-                               ${marketSentiment.factors.map(factor => `<span style="color: #666;">• ${factor}</span>`).join('<br>')}
-                           </div>
-                       ` : ''}
-                   </div>
-                   ${pumpSignals.signals.length > 0 ? `
-                       <div>
-                           <strong>Alpha Signals:</strong>
-                           <ul style="margin-top: 10px; padding-left: 20px;">
-                               ${pumpSignals.signals.map(signal => `<li style="margin-bottom: 5px;">${signal}</li>`).join('')}
-                           </ul>
-                       </div>
-                   ` : '<p>No strong alpha signals detected.</p>'}
-                   
-                   <div style="margin-top: 20px; padding: 15px; background: rgba(36, 94, 237, 0.05); border-radius: 10px;">
-                       <strong>💎 Alpha Strategy:</strong>
-                       <p style="margin-top: 5px; color: #666;">
-                           ${getPumpRecommendation(pumpSignals.potential)}
-                       </p>
-                   </div>
-               </div>
-           `;
-       }
-       
-       function getPumpRecommendation(pumpPotential) {
-           switch(pumpPotential) {
-               case 'VERY HIGH':
-                   return '🟢 Exceptional alpha opportunity detected. Consider entering with strong position and tight risk management.';
-               case 'HIGH':
-                   return '🟢 Strong alpha potential. Enter on dips with proper position sizing.';
-               case 'MODERATE':
-                   return '🟡 Moderate opportunity. Wait for confirmation or enter with smaller position.';
-               default:
-                   return '🔴 Low alpha potential. Consider other opportunities or wait for better setup.';
-           }
-       }
-       
-       function displayExitClusters(clusters, tokenData) {
-           const clustersDiv = document.getElementById('exitClusters');
-           
-           if (clusters.length === 0) {
-               clustersDiv.innerHTML = '<div class="analysis-card"><p>No significant exit clusters detected.</p></div>';
-               return;
-           }
-           
-           clustersDiv.innerHTML = clusters.map((cluster, index) => {
-               const projectedMarketCap = tokenData.marketCap ? (tokenData.marketCap * cluster.priceMultiplier) : null;
-               
-               return `
-                   <div class="cluster-item">
-                       <div class="cluster-header">
-                           <div class="cluster-price">#${index + 1} Exit Zone at $${cluster.priceLevel.toFixed(8)}</div>
-                           <div class="cluster-change">${((cluster.priceMultiplier - 1) * 100).toFixed(1)}% up</div>
-                       </div>
-                       <div class="cluster-details">
-                           <div><strong>Exit Value:</strong> $${cluster.totalValue.toLocaleString()}</div>
-                           <div><strong>Orders:</strong> ${cluster.orderCount}</div>
-                           <div><strong>Whales:</strong> 🐋 ${cluster.whaleCount}</div>
-                           <div><strong>Retail:</strong> 🐟 ${cluster.retailCount}</div>
-                           ${projectedMarketCap ? `<div><strong>Projected MC:</strong> $${projectedMarketCap.toLocaleString()}</div>` : ''}
-                       </div>
-                   </div>
-               `;
-           }).join('');
-       }
-       
-       function displayWhaleAnalysis(whaleActivity) {
-           const whaleDiv = document.getElementById('whaleAnalysis');
-           whaleDiv.innerHTML = `
-               <div class="token-info">
-                   <div class="info-card">
-                       <h3>🐋 Whale Activity</h3>
-                       <div class="value">${whaleActivity.whaleOrderCount} orders</div>
-                       <div>Average: $${whaleActivity.whaleAvgSize.toLocaleString()}</div>
-                   </div>
-                   <div class="info-card">
-                       <h3>🐟 Retail Activity</h3>
-                       <div class="value">${whaleActivity.retailOrderCount} orders</div>
-                       <div>Average: $${whaleActivity.retailAvgSize.toLocaleString()}</div>
-                   </div>
-                   <div class="info-card">
-                       <h3>📊 Whale Dominance</h3>
-                       <div class="value">${whaleActivity.whaleDominance.toFixed(1)}%</div>
-                       <div>of total exit value</div>
-                   </div>
-               </div>
-           `;
-       }
-       
-       function displayRiskAssessment(riskAssessment) {
-           const riskDiv = document.getElementById('riskAssessment');
-           const riskClass = `risk-${riskAssessment.level.toLowerCase()}`;
-           
-           riskDiv.innerHTML = `
-               <div class="analysis-card">
-                   <div class="risk-indicator ${riskClass}">
-                       ${riskAssessment.level} Risk (${riskAssessment.score}/100)
-                   </div>
-                   ${riskAssessment.risks.length > 0 ? `
-                       <div style="margin-bottom: 20px;">
-                           <strong>Risk Factors:</strong>
-                           <ul style="margin-top: 10px; padding-left: 20px;">
-                               ${riskAssessment.risks.map(risk => `<li style="margin-bottom: 5px;">${risk}</li>`).join('')}
-                           </ul>
-                       </div>
-                   ` : '<p style="margin-bottom: 20px;">No major risk factors detected.</p>'}
-                   
-                   <div style="padding: 15px; background: rgba(36, 94, 237, 0.05); border-radius: 10px;">
-                       <strong>⚠️ Risk Management:</strong>
-                       <p style="margin-top: 5px; color: #666;">
-                           ${getRiskRecommendation(riskAssessment.level)}
-                       </p>
-                   </div>
-               </div>
-           `;
-       }
-       
-       function getRiskRecommendation(riskLevel) {
-           switch(riskLevel) {
-               case 'LOW':
-                   return '✅ Relatively safe for alpha plays. Monitor whale activity and exit zones closely.';
-               case 'MODERATE':
-                   return '⚠️ Trade with caution. Use smaller position sizes and implement tight stop losses.';
-               case 'HIGH':
-                   return '🟡 High risk detected. Recommended only for experienced alpha hunters with proper risk management.';
-               case 'EXTREME':
-                   return '🔴 EXTREME RISK. Consider avoiding or use only micro positions for speculation.';
-               default:
-                   return 'Assess risk carefully before making any trading decisions.';
-           }
        }
        
        function showError(message) {
@@ -1711,7 +1174,15 @@
                <div class="error">
                    <strong>Analysis Error:</strong> ${message}
                    <br><br>
-                   Please try again with a different contract address or check your internet connection.
+                   This could be due to:
+                   <ul style="margin-top: 10px; padding-left: 20px;">
+                       <li>Invalid or non-existent token address</li>
+                       <li>Token not listed on supported DEXs</li>
+                       <li>Network connectivity issues</li>
+                       <li>API rate limiting</li>
+                   </ul>
+                   <br>
+                   Please verify the contract address and try again.
                </div>
            `;
            document.getElementById('content').style.display = 'block';
