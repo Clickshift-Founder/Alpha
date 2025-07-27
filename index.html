@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClickShift Alpha - Predictive Trading Intelligence</title>
@@ -981,45 +989,84 @@
        }
        
        // DEMO-READY Main analysis function
-       async function analyzeToken() {
-           const contractAddress = document.getElementById('contractAddress').value.trim();
-           
-           if (!contractAddress) {
-               alert('Please enter a contract address');
-               return;
-           }
-           
-           if (!isValidSolanaAddress(contractAddress)) {
-               alert('Please enter a valid Solana contract address, token symbol (like "bonk"), or supported identifier');
-               return;
-           }
-           
-           // Show loading
-           document.getElementById('results').style.display = 'block';
-           document.getElementById('loading').style.display = 'block';
-           document.getElementById('content').style.display = 'none';
-           document.getElementById('analyzeBtn').disabled = true;
-           
-           try {
-               // Fetch real basic data + generate impressive demo features
-               const tokenData = await getTokenDataWithDemoEnhancements(contractAddress);
-               
-               if (!tokenData) {
-                   throw new Error('Token not found or no trading data available');
-               }
-               
-               // Full analysis pipeline for demo
-               const analysis = await generateFullDemoAnalysis(tokenData);
-               
-               displayFullResults(tokenData, analysis);
-               logDemoUsage(contractAddress, tokenData.symbol);
-               
-           } catch (error) {
-               showError(error.message);
-           } finally {
-               document.getElementById('analyzeBtn').disabled = false;
-           }
-       }
+       // Replace your existing getTokenDataWithDemoEnhancements function with this:
+
+async function getTokenDataWithDemoEnhancements(contractAddress) {
+    try {
+        // Known token mappings
+        const knownTokens = {
+            'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+            'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+            'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
+            'sol': 'So11111111111111111111111111111111111111112'
+        };
+        
+        // First, try to use the address as-is
+        let resolvedAddress = contractAddress;
+        
+        // Only resolve to BONK if it's EXACTLY 'bonk' (case insensitive)
+        if (contractAddress.toLowerCase() === 'bonk') {
+            resolvedAddress = knownTokens['bonk'];
+        } else if (knownTokens[contractAddress.toLowerCase()]) {
+            // Check other known symbols
+            resolvedAddress = knownTokens[contractAddress.toLowerCase()];
+        }
+        
+        console.log('Fetching data for address:', resolvedAddress);
+        
+        // Try to get data with the original/resolved address first
+        let response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${resolvedAddress}`);
+        let data = await response.json();
+        
+        // If no data found AND the address ends with 'bonk', try the address as-is first
+        if ((!data.pairs || data.pairs.length === 0) && contractAddress.toLowerCase().endsWith('bonk') && contractAddress.length < 44) {
+            console.log('No data for bonk variant, trying BONK token...');
+            // Only fallback to BONK if the original address yielded no results
+            response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${knownTokens['bonk']}`);
+            data = await response.json();
+        }
+        
+        if (!data.pairs || data.pairs.length === 0) {
+            return null;
+        }
+        
+        const mainPair = data.pairs.reduce((prev, current) => 
+            (current.volume?.h24 || 0) > (prev.volume?.h24 || 0) ? current : prev
+        );
+        
+        // Real data foundation - this will show the ACTUAL token's name/symbol
+        const realData = {
+            symbol: mainPair.baseToken.symbol,
+            name: mainPair.baseToken.name,
+            price: parseFloat(mainPair.priceUsd || 0),
+            marketCap: mainPair.marketCap || 0,
+            volume24h: mainPair.volume?.h24 || 0,
+            liquidity: mainPair.liquidity?.usd || 0,
+            priceChange24h: mainPair.priceChange?.h24 || 0,
+            dex: mainPair.dexId,
+            actualAddress: mainPair.baseToken.address // Keep track of actual address
+        };
+
+        // Add demo enhancements
+        const createdDate = mainPair.pairCreatedAt ? new Date(mainPair.pairCreatedAt) : new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+        const tokenAgeHours = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
+        
+        return {
+            ...realData,
+            // Demo features (based on real data patterns)
+            holderCount: Math.floor(realData.volume24h / 50) + Math.floor(Math.random() * 5000) + 500,
+            tokenAge: Math.max(1, Math.floor(tokenAgeHours)),
+            isLiquidityLocked: realData.liquidity > 100000 && Math.random() > 0.3,
+            lockDuration: Math.floor(Math.random() * 300) + 60,
+            creatorWallet: resolvedAddress.slice(0, 8) + '...' + resolvedAddress.slice(-8),
+            devHoldings: Math.floor(Math.random() * 10) + 2,
+            burnedTokens: Math.floor(Math.random() * 25) + 10
+        };
+    } catch (error) {
+        console.error('Error fetching token data:', error);
+        return null;
+    }
+}
 
        // Real data + Demo enhancements with flexible identifier resolution
        async function getTokenDataWithDemoEnhancements(contractAddress) {
