@@ -716,7 +716,7 @@
                     type="text" 
                     id="contractAddress" 
                     class="input-field" 
-                    placeholder="Paste Solana contract address (e.g., DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263)"
+                    placeholder="Paste Solana contract address, token symbol (bonk, wif), or supported identifier"
                 >
                 <button id="analyzeBtn" class="analyze-btn">Get Alpha</button>
             </div>
@@ -990,7 +990,7 @@
            }
            
            if (!isValidSolanaAddress(contractAddress)) {
-               alert('Please enter a valid Solana contract address (44 characters)');
+               alert('Please enter a valid Solana contract address, token symbol (like "bonk"), or supported identifier');
                return;
            }
            
@@ -1021,85 +1021,51 @@
            }
        }
 
-       // Real data + Demo enhancements with symbol resolution
-      async function getTokenDataWithDemoEnhancements(contractAddress) {
-    try {
-        // Known token mappings
-        const knownTokens = {
-            'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
-            'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
-            'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
-            'sol': 'So11111111111111111111111111111111111111112'
-        };
-        
-        // Resolve symbol to contract address if needed
-        let resolvedAddress = knownTokens[contractAddress.toLowerCase()] || contractAddress;
-        
-        // Special handling for addresses ending with "bonk"
-        if (contractAddress.toLowerCase().endsWith('bonk') && contractAddress.length < 44) {
-            // If it's a short identifier ending with bonk, map to the real BONK token
-            resolvedAddress = knownTokens['bonk'];
-            console.log('Resolved bonk variant to:', resolvedAddress);
-        }
-        
-        console.log('Fetching data for resolved address:', resolvedAddress);
-        
-        // Get real data first
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${resolvedAddress}`);
-        const data = await response.json();
-        
-        if (!data.pairs || data.pairs.length === 0) {
-            // If no data found and the input ended with "bonk", try the actual BONK address
-            if (contractAddress.toLowerCase().endsWith('bonk') && resolvedAddress !== knownTokens['bonk']) {
-                console.log('Retrying with official BONK address...');
-                const retryResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${knownTokens['bonk']}`);
-                const retryData = await retryResponse.json();
-                if (retryData.pairs && retryData.pairs.length > 0) {
-                    data.pairs = retryData.pairs;
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
-        
-        const mainPair = data.pairs.reduce((prev, current) => 
-            (current.volume?.h24 || 0) > (prev.volume?.h24 || 0) ? current : prev
-        );
-        
-        // Real data foundation
-        const realData = {
-            symbol: mainPair.baseToken.symbol,
-            name: mainPair.baseToken.name,
-            price: parseFloat(mainPair.priceUsd || 0),
-            marketCap: mainPair.marketCap || 0,
-            volume24h: mainPair.volume?.h24 || 0,
-            liquidity: mainPair.liquidity?.usd || 0,
-            priceChange24h: mainPair.priceChange?.h24 || 0,
-            dex: mainPair.dexId
-        };
-
-        // Add demo enhancements (clearly labeled as estimated)
-        const createdDate = mainPair.pairCreatedAt ? new Date(mainPair.pairCreatedAt) : new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
-        const tokenAgeHours = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
-        
-        return {
-            ...realData,
-            // Demo features (based on real data patterns)
-            holderCount: Math.floor(realData.volume24h / 50) + Math.floor(Math.random() * 5000) + 500,
-            tokenAge: Math.max(1, Math.floor(tokenAgeHours)),
-            isLiquidityLocked: realData.liquidity > 100000 && Math.random() > 0.3,
-            lockDuration: Math.floor(Math.random() * 300) + 60, // 60-360 days
-            creatorWallet: resolvedAddress.slice(0, 8) + '...' + resolvedAddress.slice(-8),
-            devHoldings: Math.floor(Math.random() * 10) + 2, // 2-12%
-            burnedTokens: Math.floor(Math.random() * 25) + 10 // 10-35%
-        };
-    } catch (error) {
-        console.error('Error fetching token data:', error);
-        return null;
-    }
-       }
+       // Real data + Demo enhancements with flexible identifier resolution
+       async function getTokenDataWithDemoEnhancements(contractAddress) {
+           try {
+               // Resolve token symbols to contract addresses
+               const knownTokens = {
+                   'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+                   'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+                   'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
+                   'sol': 'So11111111111111111111111111111111111111112'
+               };
+               
+               let resolvedAddress = contractAddress;
+               
+               // Handle known symbols
+               if (knownTokens[contractAddress.toLowerCase()]) {
+                   resolvedAddress = knownTokens[contractAddress.toLowerCase()];
+                   console.log('Resolved symbol to:', resolvedAddress);
+               }
+               // Handle BonkBot-style identifiers (likely all BONK-related)
+               else if (contractAddress.toLowerCase().endsWith('bonk') && contractAddress.length >= 43) {
+                   resolvedAddress = 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'; // BONK contract
+                   console.log('BonkBot identifier detected, using BONK contract:', resolvedAddress);
+               }
+               
+               console.log('Fetching data for resolved address:', resolvedAddress);
+               
+               // Try the resolved address first
+               let response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${resolvedAddress}`);
+               let data = await response.json();
+               
+               // If that fails and we changed the address, try the original
+               if ((!data.pairs || data.pairs.length === 0) && resolvedAddress !== contractAddress) {
+                   console.log('Resolved address failed, trying original:', contractAddress);
+                   response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`);
+                   data = await response.json();
+               }
+               
+               if (!data.pairs || data.pairs.length === 0) {
+                   return null;
+               }
+               
+               const mainPair = data.pairs.reduce((prev, current) => 
+                   (current.volume?.h24 || 0) > (prev.volume?.h24 || 0) ? current : prev
+               );
+               
                // Real data foundation
                const realData = {
                    symbol: mainPair.baseToken.symbol,
@@ -1627,41 +1593,50 @@
            console.log('Demo Usage Logged:', usage);
        }
        
-       // Enhanced Solana address validation with symbol support
+       // Flexible Solana address validation - accepts various formats
        function isValidSolanaAddress(address) {
-    // Known token symbols - expanded list
-    const knownTokens = {
-        'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
-        'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
-        'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
-        'sol': 'So11111111111111111111111111111111111111112'
-    };
-    
-    // If it matches a known symbol, it's valid
-    if (knownTokens[address.toLowerCase()]) {
-        return true;
-    }
-    
-    // Handle any address ending with "bonk" (case insensitive)
-    if (address.toLowerCase().endsWith('bonk')) {
-        return true;
-    }
-    
-    // Standard Solana address validation
-    if (address.length !== 44) {
-        console.log('Invalid length:', address.length, 'for address:', address);
-        return false;
-    }
-    
-    // Check for valid base58 characters (no 0, O, I, l)
-    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
-    const isValid = base58Regex.test(address);
-    
-    if (!isValid) {
-        console.log('Failed base58 validation:', address);
-    }
-    
-    return isValid;
+           // Check if it's a known token symbol first
+           const knownTokens = {
+               'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+               'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+               'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
+               'sol': 'So11111111111111111111111111111111111111112'
+           };
+           
+           // If it matches a known symbol, it's valid
+           if (knownTokens[address.toLowerCase()]) {
+               return true;
+           }
+           
+           // Accept BonkBot-style identifiers (43-44 chars ending with 'bonk')
+           if (address.length >= 43 && address.length <= 44 && address.toLowerCase().endsWith('bonk')) {
+               console.log('Accepting BonkBot-style identifier:', address);
+               return true;
+           }
+           
+           // Standard Solana address validation (44 characters)
+           if (address.length === 44) {
+               const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
+               const isValid = base58Regex.test(address);
+               
+               if (!isValid) {
+                   console.log('Failed base58 validation:', address);
+               }
+               
+               return isValid;
+           }
+           
+           // Accept any reasonable length identifier (40-44 chars) - be flexible
+           if (address.length >= 40 && address.length <= 44) {
+               const flexibleBase58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
+               if (flexibleBase58.test(address)) {
+                   console.log('Accepting flexible identifier:', address);
+                   return true;
+               }
+           }
+           
+           console.log('Address validation failed - Invalid length or format:', address.length, 'chars');
+           return false;
        }
        
        function displayFullResults(tokenData, analysis) {
