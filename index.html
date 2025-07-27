@@ -1595,49 +1595,40 @@
        
        // Flexible Solana address validation - accepts various formats
        function isValidSolanaAddress(address) {
-           // Check if it's a known token symbol first
-           const knownTokens = {
-               'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
-               'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
-               'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
-               'sol': 'So11111111111111111111111111111111111111112'
-           };
-           
-           // If it matches a known symbol, it's valid
-           if (knownTokens[address.toLowerCase()]) {
-               return true;
-           }
-           
-           // Accept BonkBot-style identifiers (43-44 chars ending with 'bonk')
-           if (address.length >= 43 && address.length <= 44 && address.toLowerCase().endsWith('bonk')) {
-               console.log('Accepting BonkBot-style identifier:', address);
-               return true;
-           }
-           
-           // Standard Solana address validation (44 characters)
-           if (address.length === 44) {
-               const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
-               const isValid = base58Regex.test(address);
-               
-               if (!isValid) {
-                   console.log('Failed base58 validation:', address);
-               }
-               
-               return isValid;
-           }
-           
-           // Accept any reasonable length identifier (40-44 chars) - be flexible
-           if (address.length >= 40 && address.length <= 44) {
-               const flexibleBase58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
-               if (flexibleBase58.test(address)) {
-                   console.log('Accepting flexible identifier:', address);
-                   return true;
-               }
-           }
-           
-           console.log('Address validation failed - Invalid length or format:', address.length, 'chars');
-           return false;
-       }
+    // Known token symbols - expanded list
+    const knownTokens = {
+        'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+        'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+        'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
+        'sol': 'So11111111111111111111111111111111111111112'
+    };
+    
+    // If it matches a known symbol, it's valid
+    if (knownTokens[address.toLowerCase()]) {
+        return true;
+    }
+    
+    // Handle any address ending with "bonk" (case insensitive)
+    if (address.toLowerCase().endsWith('bonk')) {
+        return true;
+    }
+    
+    // Standard Solana address validation
+    if (address.length !== 44) {
+        console.log('Invalid length:', address.length, 'for address:', address);
+        return false;
+    }
+    
+    // Check for valid base58 characters (no 0, O, I, l)
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
+    const isValid = base58Regex.test(address);
+    
+    if (!isValid) {
+        console.log('Failed base58 validation:', address);
+    }
+    
+    return isValid;
+}
        
        function displayFullResults(tokenData, analysis) {
            document.getElementById('loading').style.display = 'none';
