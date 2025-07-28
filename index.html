@@ -7,7 +7,7 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
+  gtag('config', 'G-75MZH565VW');
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -972,6 +972,17 @@
                return;
            }
            
+           // Track feedback in Google Analytics
+           if (typeof gtag !== 'undefined') {
+               gtag('event', 'submit_feedback', {
+                   'nps_score': userFeedback.rating,
+                   'user_chain': userFeedback.chain,
+                   'trading_type': userFeedback.tradingType,
+                   'has_email': !!userFeedback.email,
+                   'features_wanted': userFeedback.comment
+               });
+           }
+           
            console.log('ClickShift Alpha Demo Feedback:', userFeedback);
            alert('🎉 Welcome to ClickShift Alpha! You\'ll be first to access our production-ready platform!');
            
@@ -984,14 +995,58 @@
        
        // Quick token analysis
        function analyzeQuickToken(address) {
-        // Track analysis event
-gtag('event', 'analyze_token', {
-  'token_symbol': tokenData.symbol,
-  'token_address': contractAddress,
-  'user_id': localStorage.getItem('user_id') || 'anonymous'
-});
            document.getElementById('contractAddress').value = address;
            analyzeToken();
+       }
+
+       // MAIN ANALYZE FUNCTION - THIS WAS MISSING!
+       async function analyzeToken() {
+           const contractAddress = document.getElementById('contractAddress').value.trim();
+           
+           if (!contractAddress) {
+               alert('Please enter a contract address');
+               return;
+           }
+           
+           if (!isValidSolanaAddress(contractAddress)) {
+               alert('Please enter a valid Solana contract address (44 characters)');
+               return;
+           }
+           
+           // Show loading
+           document.getElementById('results').style.display = 'block';
+           document.getElementById('loading').style.display = 'block';
+           document.getElementById('content').style.display = 'none';
+           document.getElementById('analyzeBtn').disabled = true;
+           
+           try {
+               // Fetch real basic data + generate impressive demo features
+               const tokenData = await getTokenDataWithDemoEnhancements(contractAddress);
+               
+               if (!tokenData) {
+                   throw new Error('Token not found or no trading data available');
+               }
+               
+               // Track in Google Analytics
+               if (typeof gtag !== 'undefined') {
+                   gtag('event', 'analyze_token', {
+                       'token_symbol': tokenData.symbol,
+                       'token_address': contractAddress,
+                       'user_id': localStorage.getItem('user_id') || 'anonymous'
+                   });
+               }
+               
+               // Full analysis pipeline for demo
+               const analysis = await generateFullDemoAnalysis(tokenData);
+               
+               displayFullResults(tokenData, analysis);
+               logDemoUsage(contractAddress, tokenData.symbol);
+               
+           } catch (error) {
+               showError(error.message);
+           } finally {
+               document.getElementById('analyzeBtn').disabled = false;
+           }
        }
 
        // Real data + Demo enhancements with flexible identifier resolution
