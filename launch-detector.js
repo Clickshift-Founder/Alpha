@@ -26,6 +26,62 @@ const CONFIG = {
         LOW: 30
     }
 };
+//============ ADD TOKEN TRACKING CLASS HERE (After line 30) ============
+// ADD THIS NEW CLASS:
+class TokenPerformanceTracker {
+    constructor() {
+        this.trackedTokens = new Map();
+        this.successMetrics = {
+            totalAlerted: 0,
+            ruggedCount: 0,
+            pumpedCount: 0,
+            avgReturn: 0,
+            bestPerformer: null
+        };
+    }
+
+    async trackToken(tokenAddress, initialData) {
+        const token = {
+            address: tokenAddress,
+            symbol: initialData.symbol,
+            alertTime: Date.now(),
+            initialPrice: initialData.price || parseFloat(initialData.priceUsd),
+            initialLiquidity: initialData.liquidity?.usd || initialData.liquidity,
+            priceHistory: []
+        };
+        
+        this.trackedTokens.set(tokenAddress, token);
+        this.successMetrics.totalAlerted++;
+        
+        // Check performance after 1 hour
+        setTimeout(() => this.checkPerformance(tokenAddress, '1h'), 3600000);
+    }
+
+    async checkPerformance(tokenAddress, timeframe) {
+        try {
+            const response = await axios.get(
+                `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
+            );
+            
+            if (response.data?.pairs?.[0]) {
+                const current = response.data.pairs[0];
+                const token = this.trackedTokens.get(tokenAddress);
+                
+                const priceChange = ((parseFloat(current.priceUsd) - token.initialPrice) / token.initialPrice) * 100;
+                
+                console.log(`📊 ${token.symbol} Performance (${timeframe}): ${priceChange > 0 ? '+' : ''}${priceChange.toFixed(1)}%`);
+                
+                if (priceChange > 100) this.successMetrics.pumpedCount++;
+                if (current.liquidity?.usd < token.initialLiquidity * 0.1) this.successMetrics.ruggedCount++;
+            }
+        } catch (error) {
+            console.error('Performance check error:', error.message);
+        }
+    }
+}
+
+// Initialize tracker
+const performanceTracker = new TokenPerformanceTracker();
 
 // Initialize Telegram Bot
 const bot = new TelegramBot(CONFIG.TELEGRAM_TOKEN, { polling: true });
@@ -114,6 +170,7 @@ class WorkingLaunchDetector {
                     this.checkShyftNewTokens(),         // Shyft API
                     this.checkBirdeyeTrending(),        // Birdeye trending
                     this.checkSolanaFMLatest(),         // SolanaFM
+                    this.checkPumpSwap()                // PUMPSWAP
                 ]);
                 
                 // Log results
@@ -154,7 +211,7 @@ class WorkingLaunchDetector {
                     'User-Agent': 'Mozilla/5.0'
                 }
             });
-            
+             
             if (response.data?.pairs) {
                 const pairs = response.data.pairs;
                 
@@ -187,6 +244,27 @@ class WorkingLaunchDetector {
         }
     }
 
+    // Use the PumpSwap Method Function:
+async checkPumpSwap() {
+    try {
+        console.log('🎯 Checking PumpSwap...');
+        
+        // PumpSwap uses Raydium pools, check via Raydium API
+        const response = await axios.get('https://api.raydium.io/v2/main/pairs', {
+            timeout: 10000
+        });
+        
+        // Filter for new PumpSwap launches
+        const pumpSwapTokens = response.data.filter(pair => 
+            pair.name?.includes('PUMP') || 
+            pair.ammId?.includes('pump')
+        );
+        
+        // Process new tokens...
+    } catch (error) {
+        console.log('PumpSwap check failed:', error.message);
+    }
+}
     // Method 2: Shyft API for real-time detection
     async checkShyftNewTokens() {
         // Skip if no API key
@@ -434,6 +512,7 @@ ${risk.warnings.join('\n')}
             
             console.log(`✅ Alert sent: ${pairData.baseToken?.symbol} (${age}m old)`);
             this.detectionCount++;
+            await performanceTracker.trackToken(tokenAddress, pairData);
             
         } catch (error) {
             console.error('Failed to send alert:', error.message);
@@ -526,6 +605,24 @@ bot.onText(/\/stats/, async (msg) => {
 🔗 https://clickshift-alpha.vercel.app`;
 
     bot.sendMessage(msg.chat.id, stats, { parse_mode: 'Markdown' });
+});
+bot.onText(/\/performance/, async (msg) => {
+    const metrics = performanceTracker.successMetrics;
+    const accuracy = metrics.totalAlerted > 0 ? 
+        ((metrics.pumpedCount / metrics.totalAlerted) * 100).toFixed(1) : 0;
+    
+    const performanceMsg = `📊 *Performance Metrics*
+
+🚀 *Total Alerts:* ${metrics.totalAlerted}
+📈 *Pumped (>100%):* ${metrics.pumpedCount}
+💀 *Rugged:* ${metrics.ruggedCount}
+🎯 *Success Rate:* ${accuracy}%
+
+💎 *Best Performer:* ${metrics.bestPerformer?.symbol || 'TBD'}
+
+⏰ *Tracking Since:* ${new Date(performanceTracker.startTime).toLocaleDateString()}`;
+
+    bot.sendMessage(msg.chat.id, performanceMsg, { parse_mode: 'Markdown' });
 });
 
 // Create and start detector
@@ -781,7 +878,7 @@ bot.on('message', async (msg) => {
             console.log(`✅ New user registered: ${user.name} (${user.email})`);
             
             // Send notification to admin (you)
-            const ADMIN_CHAT_ID = '7595436988'; // Your Telegram ID
+            const ADMIN_CHAT_ID = '676745291'; // Your Telegram ID
             await bot.sendMessage(ADMIN_CHAT_ID, 
                 `📧 *New User Registered!*\n` +
                 `Name: ${user.name}\n` +
@@ -820,7 +917,7 @@ To update your info, use /start`;
 
 // New command: Admin stats (only for you)
 bot.onText(/\/admin/, async (msg) => {
-    const ADMIN_ID = 7595436988; // Your Telegram ID
+    const ADMIN_ID = 676745291; // Your Telegram ID
     
     if (msg.from.id !== ADMIN_ID) {
         bot.sendMessage(msg.chat.id, 'Unauthorized.');
@@ -861,7 +958,7 @@ ${recentUsers.map(u => `• ${u.name || 'Unknown'} - ${u.email || 'No email'}`).
 
 // Export emails command (admin only)
 bot.onText(/\/export/, async (msg) => {
-    if (msg.from.id !== 7595436988) return;
+    if (msg.from.id !== 676745291) return;
     
     try {
         const csv = await userManager.exportEmails();
@@ -1281,6 +1378,10 @@ if (require.main === module) {
         process.exit(0);
     });
 }
+// Keep process alive for Railway
+setInterval(() => {
+    console.log(`⚡ Bot alive - Scans: ${detector.stats.scans} | Detections: ${detector.detectionCount}`);
+}, 300000); // Log every 5 minutes
 
 // Also, don't forget to install ws package:
 // npm install ws
