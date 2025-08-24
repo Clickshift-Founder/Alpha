@@ -1048,6 +1048,36 @@
                document.getElementById('analyzeBtn').disabled = false;
            }
        }
+// trackAnalysis() function to ensure popup. That is the trigger.
+
+        trackAnalysis();{ // <-- THIS IS WHAT YOU'RE MISSING
+        
+    catch (error) {
+        showError(error.message);
+    } finally {
+        document.getElementById('analyzeBtn').disabled = false;
+    }
+}
+
+// Also make sure you have this function (from the popup code I gave you):
+function trackAnalysis() {
+    // Get or initialize analysis count
+    let analysisCount = parseInt(localStorage.getItem('analysisCount') || '0');
+    analysisCount++;
+    localStorage.setItem('analysisCount', analysisCount);
+    
+    console.log('Analysis #' + analysisCount); // Debug log
+    
+    // Show popup after 2nd analysis
+    if (analysisCount === 2 && !localStorage.getItem('hasSeenBotPopup')) {
+        setTimeout(() => showBotPopup(), 3000); // Show after 3 seconds
+    }
+    
+    // Show premium popup after 5th analysis
+    if (analysisCount === 5 && !localStorage.getItem('emailCaptured')) {
+        setTimeout(() => showPremiumPopup(), 3000);
+    }
+}
 
        // Real data + Demo enhancements with flexible identifier resolution
        async function getTokenDataWithDemoEnhancements(contractAddress) {
@@ -2012,221 +2042,5 @@
            document.getElementById('content').style.display = 'block';
        }
    </script>
-   // Add this to your index.html (Alpha tool) - Place before closing </body> tag
-
-// Smart Popup System for User Acquisition
-<script>
-// Track analysis count
-let analysisCount = parseInt(localStorage.getItem('analysisCount') || '0');
-let hasSeenPopup = localStorage.getItem('hasSeenBotPopup') === 'true';
-let emailCaptured = localStorage.getItem('emailCaptured') === 'true';
-
-// Increment on each analysis (add this to your analyzeToken function)
-function trackAnalysis() {
-    analysisCount++;
-    localStorage.setItem('analysisCount', analysisCount);
-    
-    // Show popup after 2nd analysis if not seen
-    if (analysisCount === 2 && !hasSeenPopup && !emailCaptured) {
-        setTimeout(() => showBotPopup(), 3000); // Show after 3 seconds
-    }
-    
-    // Show different popup after 5th analysis
-    if (analysisCount === 5 && !emailCaptured) {
-        setTimeout(() => showPremiumPopup(), 3000);
-    }
-}
-
-// Bot acquisition popup
-function showBotPopup() {
-    const popupHTML = `
-        <div id="bot-popup" style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
-        ">
-            <div style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 20px;
-                padding: 40px;
-                max-width: 500px;
-                margin: 20px;
-                position: relative;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                animation: slideUp 0.4s ease;
-            ">
-                <button onclick="closePopup()" style="
-                    position: absolute;
-                    top: 15px;
-                    right: 15px;
-                    background: rgba(255,255,255,0.2);
-                    border: none;
-                    color: white;
-                    font-size: 24px;
-                    width: 35px;
-                    height: 35px;
-                    border-radius: 50%;
-                    cursor: pointer;
-                ">×</button>
-                
-                <h2 style="color: white; margin-bottom: 20px; font-size: 28px;">
-                    🔥 You Found a ${Math.floor(Math.random() * 50 + 10)}x Gem!
-                </h2>
-                
-                <p style="color: white; margin-bottom: 25px; font-size: 16px; line-height: 1.6;">
-                    But what if you could find them <strong>BEFORE</strong> they pump?
-                    <br><br>
-                    Join 500+ traders getting new token alerts in <strong>&lt;30 seconds</strong> of launch!
-                </p>
-                
-                <div style="
-                    background: rgba(0,0,0,0.2);
-                    border-radius: 10px;
-                    padding: 15px;
-                    margin-bottom: 25px;
-                ">
-                    <p style="color: #ffd700; margin: 0; font-weight: bold;">
-                        ⚡ Last alert: $MICKEY → +450% in 2 hours
-                    </p>
-                </div>
-                
-                <div id="email-form" style="margin-bottom: 20px;">
-                    <input type="email" id="popup-email" placeholder="Enter your email for exclusive alerts" style="
-                        width: 100%;
-                        padding: 15px;
-                        border-radius: 10px;
-                        border: none;
-                        font-size: 16px;
-                        margin-bottom: 15px;
-                    ">
-                    
-                    <button onclick="submitEmail()" style="
-                        width: 100%;
-                        padding: 15px;
-                        background: linear-gradient(45deg, #00ff88, #00cc66);
-                        color: #1a1a1a;
-                        border: none;
-                        border-radius: 10px;
-                        font-size: 18px;
-                        font-weight: bold;
-                        cursor: pointer;
-                        transition: transform 0.2s;
-                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        Get Instant Access →
-                    </button>
-                </div>
-                
-                <div style="text-align: center;">
-                    <a href="https://t.me/ClickShiftAlphaBot" target="_blank" style="
-                        color: white;
-                        text-decoration: none;
-                        opacity: 0.8;
-                        font-size: 14px;
-                    ">Skip to Telegram Bot →</a>
-                </div>
-            </div>
-        </div>
-        
-        <style>
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            @keyframes slideUp {
-                from { transform: translateY(30px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-        </style>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', popupHTML);
-    localStorage.setItem('hasSeenBotPopup', 'true');
-}
-
-// Premium conversion popup
-function showPremiumPopup() {
-    const popupHTML = `
-        <div id="bot-popup" style="...similar styling...">
-            <div style="...similar container...">
-                <h2 style="color: white;">💎 You're a Power User!</h2>
-                <p style="color: white;">You've analyzed ${analysisCount} tokens. Ready to level up?</p>
-                
-                <ul style="color: white; line-height: 2;">
-                    <li>⚡ Get alerts BEFORE they appear here</li>
-                    <li>📊 Advanced AI predictions</li>
-                    <li>🎯 95% accuracy on rug detection</li>
-                    <li>💰 Exit point predictions</li>
-                </ul>
-                
-                <a href="/bot-landing.html" style="...button styling...">
-                    Unlock Premium Features →
-                </a>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', popupHTML);
-}
-
-// Submit email function
-async function submitEmail() {
-    const email = document.getElementById('popup-email').value;
-    if (!email || !email.includes('@')) {
-        alert('Please enter a valid email');
-        return;
-    }
-    
-    // Store email (send to your backend later)
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('emailCaptured', 'true');
-    
-    // Track in Google Analytics
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'email_capture', {
-            'source': 'analysis_popup',
-            'analysis_count': analysisCount
-        });
-    }
-    
-    // Show success message
-    document.getElementById('email-form').innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-            <p style="color: #00ff88; font-size: 20px; margin-bottom: 15px;">
-                ✅ Success! Check your email for access.
-            </p>
-            <a href="https://t.me/ClickShiftAlphaBot" target="_blank" style="
-                display: inline-block;
-                padding: 12px 30px;
-                background: white;
-                color: #764ba2;
-                border-radius: 10px;
-                text-decoration: none;
-                font-weight: bold;
-            ">Join Telegram Bot →</a>
-        </div>
-    `;
-    
-    // Auto-close after 5 seconds
-    setTimeout(() => closePopup(), 5000);
-}
-
-// Close popup
-function closePopup() {
-    const popup = document.getElementById('bot-popup');
-    if (popup) popup.remove();
-}
-
-// Add this to your existing analyzeToken function
-// After displaying results, call:
-// trackAnalysis();
-</script>
 </body>
 </html>
