@@ -735,6 +735,9 @@
                 <div class="quick-token" onclick="analyzeQuickToken('DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263')">BONK</div>
                 <div class="quick-token" onclick="analyzeQuickToken('EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm')">WIF</div>
                 <div class="quick-token" onclick="analyzeQuickToken('7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr')">POPCAT</div>
+                <div class="quick-token" onclick="analyzeQuickToken('7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr')">POPCAT</div>
+                <div class="quick-token" onclick="analyzeQuickToken('JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN')">JUP</div>
+                <div class="quick-token" onclick="analyzeQuickToken('HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3')">PYTH</div>
             </div>
             
             <div class="coming-soon">
@@ -1058,7 +1061,10 @@
             'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
             'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
             'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
-            'sol': 'So11111111111111111111111111111111111111112'
+            'sol': 'So11111111111111111111111111111111111111112',
+            'jup': 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+            'pyth': 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3',
+            'usdc': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
         };
         
         // Resolve symbol to contract address if needed
@@ -1630,7 +1636,10 @@
         'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
         'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
         'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
-        'sol': 'So11111111111111111111111111111111111111112'
+        'sol': 'So11111111111111111111111111111111111111112',
+        'jup': 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+        'pyth': 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3',
+        'usdc': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
     };
     
     // If it matches a known symbol, it's valid
@@ -1643,14 +1652,14 @@
         return true;
     }
     
-    // Standard Solana address validation
-    if (address.length !== 44) {
+    // Accept Solana addresses between 32 - 44 characters
+    if (address.length >= 32 && address.length <= 44) {
         console.log('Invalid length:', address.length, 'for address:', address);
         return false;
     }
     
     // Check for valid base58 characters (no 0, O, I, l)
-    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{44}$/;
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     const isValid = base58Regex.test(address);
     
     if (!isValid) {
@@ -2012,12 +2021,7 @@
            `;
            document.getElementById('content').style.display = 'block';
        }
-   </script>
-   // Add this to your index.html (Alpha tool) - Place before closing </body> tag
-
-// Smart Popup System for User Acquisition
-<script>
-// Track analysis count
+       // Track analysis count
 let analysisCount = parseInt(localStorage.getItem('analysisCount') || '0');
 let hasSeenPopup = localStorage.getItem('hasSeenBotPopup') === 'true';
 let emailCaptured = localStorage.getItem('emailCaptured') === 'true';
@@ -2228,6 +2232,6 @@ function closePopup() {
 // Add this to your existing analyzeToken function
 // After displaying results, call:
 // trackAnalysis();
-</script>
+   </script>
 </body>
 </html>
