@@ -1067,7 +1067,7 @@ function setCachedData(address, data) {
            }
            
            if (!isValidSolanaAddress(contractAddress)) {
-               alert('Please enter a valid Solana contract address (33-44 characters)');
+               alert('Please enter a valid Solana contract address (32-44 characters)');
                return;
            }
            
@@ -1124,11 +1124,11 @@ function setCachedData(address, data) {
         // Resolve symbol to contract address if needed
         let resolvedAddress = knownTokens[contractAddress.toLowerCase()] || contractAddress;
         
-        // Special handling for addresses ending with "bonk"
-        if (contractAddress.toLowerCase().endsWith('bonk') && contractAddress.length >= 32 && contractAddress.length <=44) {
+        // Handle case when user literally types "bonk"
+        if (contractAddress.toLowerCase() === 'bonk'){
             // If it's a short identifier ending with bonk, map to the real BONK token
             resolvedAddress = knownTokens['bonk'];
-            console.log('Resolved bonk variant to:', resolvedAddress);
+            console.log('Resolved symbol bonk to:', resolvedAddress);
         }
         
         console.log('Fetching data for resolved address:', resolvedAddress);
