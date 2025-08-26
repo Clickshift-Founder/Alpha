@@ -898,6 +898,57 @@
    </div>
 
    <script>
+    // Cache configuration
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const tokenCache = new Map();
+
+// Load cache from localStorage on page load
+function loadCache() {
+    try {
+        const cached = localStorage.getItem('tokenCache');
+        if (cached) {
+            const data = JSON.parse(cached);
+            Object.entries(data).forEach(([key, value]) => {
+                if (Date.now() - value.timestamp < CACHE_DURATION) {
+                    tokenCache.set(key, value);
+                }
+            });
+        }
+    } catch (e) {
+        console.log('Cache load failed:', e);
+    }
+}
+
+// Get cached data
+function getCachedData(address) {
+    const cached = tokenCache.get(address);
+    if (!cached) return null;
+    
+    if (Date.now() - cached.timestamp > CACHE_DURATION) {
+        tokenCache.delete(address);
+        return null;
+    }
+    
+    return cached.data;
+}
+
+// Set cached data
+function setCachedData(address, data) {
+    tokenCache.set(address, {
+        data: data,
+        timestamp: Date.now()
+    });
+    
+    try {
+        const cacheData = {};
+        tokenCache.forEach((value, key) => {
+            cacheData[key] = value;
+        });
+        localStorage.setItem('tokenCache', JSON.stringify(cacheData));
+    } catch (e) {
+        console.log('Cache save failed:', e);
+    }
+}
        // Demo Configuration - Enhanced algorithms for impressive analysis
        const DEMO_CONFIG = {
            WHALE_THRESHOLD: 10000,
@@ -914,7 +965,10 @@
            timestamp: null,
            features: []
        };
-       
+        window.addEventListener('DOMContentLoaded', () => {
+    loadCache(); // ADD THIS LINE
+    // ... rest of your initialization
+});
        // Initialize
        document.addEventListener('DOMContentLoaded', function() {
            document.getElementById('analyzeBtn').addEventListener('click', analyzeToken);
@@ -1013,7 +1067,7 @@
            }
            
            if (!isValidSolanaAddress(contractAddress)) {
-               alert('Please enter a valid Solana contract address (44 characters)');
+               alert('Please enter a valid Solana contract address (33-44 characters)');
                return;
            }
            
@@ -1071,7 +1125,7 @@
         let resolvedAddress = knownTokens[contractAddress.toLowerCase()] || contractAddress;
         
         // Special handling for addresses ending with "bonk"
-        if (contractAddress.toLowerCase().endsWith('bonk') && contractAddress.length < 44) {
+        if (contractAddress.toLowerCase().endsWith('bonk') && contractAddress.length >= 32 && contractAddress.length <=44) {
             // If it's a short identifier ending with bonk, map to the real BONK token
             resolvedAddress = knownTokens['bonk'];
             console.log('Resolved bonk variant to:', resolvedAddress);
@@ -1652,18 +1706,12 @@
         return true;
     }
     
-    // Accept Solana addresses between 32 - 44 characters
-    if (address.length >= 32 && address.length <= 44) {
-        console.log('Invalid length:', address.length, 'for address:', address);
-        return false;
-    }
-    
     // Check for valid base58 characters (no 0, O, I, l)
     const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     const isValid = base58Regex.test(address);
     
     if (!isValid) {
-        console.log('Failed base58 validation:', address);
+        console.log('Failed base58 validation:', address, 'length', address.length);
     }
     
     return isValid;
