@@ -1,690 +1,108 @@
-// ClickShift Launch Detector - PRODUCTION VERSION
-// Working endpoints + Shyft API for real-time detection
+// ClickShift Superior Launch Detector v6.2
+// Fixed: Email collection, Telegram markdown, Export function
 
 const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config();
-
-// Configuration
-const CONFIG = {
-    TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN,
-    CHANNEL_ID: process.env.CHANNEL_ID || '@ClickShiftAlerts',
-    
-    // API Keys
-    SHYFT_API_KEY: process.env.SHYFT_API_KEY || 'YOUR_SHYFT_KEY', // Get free at shyft.to
-    SHYFT_RPC_URL: `https://rpc.shyft.to?api_key=${process.env.SHYFT_API_KEY}`, // RPC endpoint
-    
-    // Detection settings
-    MIN_LIQUIDITY: 100,          // Very low to catch all new tokens
-    MAX_TOKEN_AGE: 7200000,      // 2 hours (in milliseconds)
-    SCAN_INTERVAL: 20000,        // 20 seconds between scans
-    
-    // Safety thresholds
-    SAFETY_THRESHOLDS: {
-        HIGH: 70,
-        MEDIUM: 50,
-        LOW: 30
-    }
-};
-//============ ADD TOKEN TRACKING CLASS HERE (After line 30) ============
-// ADD THIS NEW CLASS:
-class TokenPerformanceTracker {
-    constructor() {
-        this.trackedTokens = new Map();
-        this.successMetrics = {
-            totalAlerted: 0,
-            ruggedCount: 0,
-            pumpedCount: 0,
-            avgReturn: 0,
-            bestPerformer: null
-        };
-    }
-
-    async trackToken(tokenAddress, initialData) {
-        const token = {
-            address: tokenAddress,
-            symbol: initialData.symbol,
-            alertTime: Date.now(),
-            initialPrice: initialData.price || parseFloat(initialData.priceUsd),
-            initialLiquidity: initialData.liquidity?.usd || initialData.liquidity,
-            priceHistory: []
-        };
-        
-        this.trackedTokens.set(tokenAddress, token);
-        this.successMetrics.totalAlerted++;
-        
-        // Check performance after 1 hour
-        setTimeout(() => this.checkPerformance(tokenAddress, '1h'), 3600000);
-    }
-
-    async checkPerformance(tokenAddress, timeframe) {
-        try {
-            const response = await axios.get(
-                `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
-            );
-            
-            if (response.data?.pairs?.[0]) {
-                const current = response.data.pairs[0];
-                const token = this.trackedTokens.get(tokenAddress);
-                
-                const priceChange = ((parseFloat(current.priceUsd) - token.initialPrice) / token.initialPrice) * 100;
-                
-                console.log(`📊 ${token.symbol} Performance (${timeframe}): ${priceChange > 0 ? '+' : ''}${priceChange.toFixed(1)}%`);
-                
-                if (priceChange > 100) this.successMetrics.pumpedCount++;
-                if (current.liquidity?.usd < token.initialLiquidity * 0.1) this.successMetrics.ruggedCount++;
-            }
-        } catch (error) {
-            console.error('Performance check error:', error.message);
-        }
-    }
-}
-
-// Initialize tracker
-const performanceTracker = new TokenPerformanceTracker();
-
-// Initialize Telegram Bot
-const bot = new TelegramBot(CONFIG.TELEGRAM_TOKEN, { polling: true });
-
-// Track processed tokens
-const processedTokens = new Set();
-const tokenCache = new Map();
-
-class WorkingLaunchDetector {
-    constructor() {
-        this.isRunning = false;
-        this.detectionCount = 0;
-        this.startTime = Date.now();
-        this.lastDetectionTime = Date.now();
-        this.stats = {
-            scans: 0,
-            tokens: 0,
-            dexscreener: 0,
-            shyft: 0,
-            birdeye: 0,
-            errors: 0
-        };
-    }
-
-    async start() {
-        console.log('🚀 ClickShift Launch Detector - PRODUCTION MODE');
-        console.log(`📡 Scan interval: Every ${CONFIG.SCAN_INTERVAL/1000} seconds`);
-        console.log(`💧 Min liquidity: $${CONFIG.MIN_LIQUIDITY}`);
-        console.log(`⏰ Max token age: ${CONFIG.MAX_TOKEN_AGE/3600000} hours`);
-        
-        // Check if Shyft API key is configured
-        if (CONFIG.SHYFT_API_KEY && CONFIG.SHYFT_API_KEY !== 'YOUR_SHYFT_KEY') {
-            console.log('✅ Shyft API configured for real-time detection');
-        } else {
-            console.log('⚠️ Shyft API not configured - Get free key at shyft.to');
-        }
-        
-        await this.sendStartupAlert();
-        
-        this.isRunning = true;
-        this.detectLoop();
-    }
-
-    async sendStartupAlert() {
-        const message = `🚀 *LAUNCH DETECTOR ONLINE*
-
-*Version:* Production v2.0
-*Speed:* 20-second scans
-*Coverage:* Multiple data sources
-
-*Active Monitors:*
-• DexScreener API ✅
-• Shyft RPC Monitor 🚀
-• Birdeye Trending 🦅
-• Direct DEX Queries 📊
-
-*Detection Targets:*
-• Tokens < 2 hours old
-• Min liquidity: $${CONFIG.MIN_LIQUIDITY}
-• All Solana DEXs
-
-🔍 *Scanning for new launches...*
-
-💎 Join the alpha: @ClickShiftAlerts`;
-
-        try {
-            await bot.sendMessage(CONFIG.CHANNEL_ID, message, {
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            });
-            console.log('✅ Bot started successfully');
-        } catch (error) {
-            console.error('❌ Startup alert failed:', error.message);
-        }
-    }
-
-    async detectLoop() {
-        while (this.isRunning) {
-            try {
-                this.stats.scans++;
-                console.log(`\n🔍 Scan #${this.stats.scans} at ${new Date().toLocaleTimeString()}`);
-                
-                // Run all detection methods
-                const results = await Promise.allSettled([
-                    this.checkDexScreenerWorking(),     // FIXED endpoint
-                    this.checkShyftNewTokens(),         // Shyft API
-                    this.checkBirdeyeTrending(),        // Birdeye trending
-                    this.checkSolanaFMLatest(),         // SolanaFM
-                    this.checkPumpSwap()                // PUMPSWAP
-                ]);
-                
-                // Log results
-                results.forEach((result, index) => {
-                    if (result.status === 'rejected') {
-                        const sources = ['DexScreener', 'Shyft', 'Birdeye', 'SolanaFM'];
-                        console.log(`⚠️ ${sources[index]} failed:`, result.reason?.message?.slice(0, 50));
-                    }
-                });
-                
-                // Show stats
-                const timeSinceLastDetection = Math.floor((Date.now() - this.lastDetectionTime) / 60000);
-                console.log(`📊 Tokens found: ${this.stats.tokens} | Last detection: ${timeSinceLastDetection}m ago`);
-                
-                await this.sleep(CONFIG.SCAN_INTERVAL);
-                
-            } catch (error) {
-                console.error('❌ Loop error:', error.message);
-                this.stats.errors++;
-                await this.sleep(10000);
-            }
-        }
-    }
-
-    // Method 1: WORKING DexScreener endpoint
-    async checkDexScreenerWorking() {
-        try {
-            console.log('📊 Checking DexScreener...');
-            
-            // CORRECT ENDPOINT - This one actually works!
-            const response = await axios.get('https://api.dexscreener.com/latest/dex/search', {
-                params: { 
-                    q: 'USDC SOL'  // Search for new SOL pairs
-                },
-                timeout: 10000,
-                headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': 'Mozilla/5.0'
-                }
-            });
-             
-            if (response.data?.pairs) {
-                const pairs = response.data.pairs;
-                
-                // Filter for new Solana pairs
-                const newPairs = pairs.filter(pair => {
-                    if (!pair.pairCreatedAt || pair.chainId !== 'solana') return false;
-                    
-                    const age = Date.now() - pair.pairCreatedAt;
-                    return age < CONFIG.MAX_TOKEN_AGE && 
-                           pair.liquidity?.usd >= CONFIG.MIN_LIQUIDITY;
-                });
-                
-                console.log(`✅ DexScreener: Found ${newPairs.length} recent pairs`);
-                
-                // Process newest pairs first
-                const sortedPairs = newPairs.sort((a, b) => b.pairCreatedAt - a.pairCreatedAt);
-                
-                for (const pair of sortedPairs.slice(0, 5)) {
-                    const tokenAddress = pair.baseToken?.address;
-                    if (tokenAddress && !processedTokens.has(tokenAddress)) {
-                        await this.analyzeAndAlert(pair, 'DexScreener');
-                        this.stats.dexscreener++;
-                        this.stats.tokens++;
-                        this.lastDetectionTime = Date.now();
-                    }
-                }
-            }
-        } catch (error) {
-            console.log('⚠️ DexScreener error:', error.message);
-        }
-    }
-
-    // Use the PumpSwap Method Function:
-async checkPumpSwap() {
-    try {
-        console.log('🎯 Checking PumpSwap...');
-        
-        // PumpSwap uses Raydium pools, check via Raydium API
-        const response = await axios.get('https://api.raydium.io/v2/main/pairs', {
-            timeout: 10000
-        });
-        
-        // Filter for new PumpSwap launches
-        const pumpSwapTokens = response.data.filter(pair => 
-            pair.name?.includes('PUMP') || 
-            pair.ammId?.includes('pump')
-        );
-        
-        // Process new tokens...
-    } catch (error) {
-        console.log('PumpSwap check failed:', error.message);
-    }
-}
-    // Method 2: Shyft API for real-time detection
-    async checkShyftNewTokens() {
-        // Skip if no API key
-        if (!CONFIG.SHYFT_API_KEY || CONFIG.SHYFT_API_KEY === 'YOUR_SHYFT_KEY') {
-            return;
-        }
-
-        try {
-            console.log('🚀 Checking Shyft for new tokens...');
-            
-            // Use Shyft's token monitoring endpoint
-            const response = await axios.get('https://api.shyft.to/sol/v1/token/all_tokens', {
-                headers: {
-                    'x-api-key': CONFIG.SHYFT_API_KEY
-                },
-                params: {
-                    network: 'mainnet-beta',
-                    page: 1,
-                    size: 20
-                },
-                timeout: 10000
-            });
-            
-            if (response.data?.success && response.data?.result) {
-                const tokens = response.data.result;
-                console.log(`✅ Shyft: Found ${tokens.length} recent tokens`);
-                
-                for (const token of tokens) {
-                    if (!processedTokens.has(token.address)) {
-                        // Get more details about the token
-                        await this.analyzeShyftToken(token);
-                        this.stats.shyft++;
-                    }
-                }
-            }
-        } catch (error) {
-            // Try alternative Shyft endpoint
-            try {
-                const response = await axios.get('https://api.shyft.to/sol/v1/transaction/history', {
-                    headers: {
-                        'x-api-key': CONFIG.SHYFT_API_KEY
-                    },
-                    params: {
-                        network: 'mainnet-beta',
-                        account: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-                        tx_num: 10
-                    },
-                    timeout: 10000
-                });
-                
-                if (response.data?.success) {
-                    console.log('✅ Shyft: Monitoring token program transactions');
-                    // Process token creation transactions
-                    await this.processShyftTransactions(response.data.result);
-                }
-            } catch (err) {
-                console.log('⚠️ Shyft API error - Get free key at shyft.to');
-            }
-        }
-    }
-
-    // Method 3: Birdeye trending tokens
-    async checkBirdeyeTrending() {
-        try {
-            console.log('🦅 Checking Birdeye trending...');
-            
-            // Birdeye public endpoint (no key needed for basic data)
-            const response = await axios.get('https://public-api.birdeye.so/public/tokenlist', {
-                params: {
-                    sort_by: 'v24hUSD',
-                    sort_type: 'desc',
-                    limit: 50
-                },
-                timeout: 10000
-            });
-            
-            if (response.data?.data?.tokens) {
-                const tokens = response.data.data.tokens;
-                
-                // Filter for new tokens
-                const newTokens = tokens.filter(token => {
-                    // Check if we've seen it before
-                    return !processedTokens.has(token.address) && 
-                           token.liquidity > CONFIG.MIN_LIQUIDITY;
-                });
-                
-                console.log(`✅ Birdeye: ${newTokens.length} potential new tokens`);
-                
-                for (const token of newTokens.slice(0, 3)) {
-                    await this.checkIfNewToken(token.address, 'Birdeye');
-                }
-            }
-        } catch (error) {
-            // Birdeye might be rate limited or require auth
-        }
-    }
-
-    // Method 4: SolanaFM latest tokens
-    async checkSolanaFMLatest() {
-        try {
-            console.log('📡 Checking SolanaFM...');
-            
-            const response = await axios.get('https://api.solana.fm/v0/tokens', {
-                params: {
-                    limit: 20,
-                    offset: 0
-                },
-                timeout: 10000
-            });
-            
-            if (response.data?.tokens) {
-                for (const token of response.data.tokens.slice(0, 5)) {
-                    if (!processedTokens.has(token.address)) {
-                        await this.checkIfNewToken(token.address, 'SolanaFM');
-                    }
-                }
-            }
-        } catch (error) {
-            // SolanaFM might be down
-        }
-    }
-
-    // Analyze Shyft token
-    async analyzeShyftToken(tokenData) {
-        try {
-            // Get trading data from DexScreener
-            const dexData = await this.getTokenData(tokenData.address);
-            
-            if (dexData && dexData.liquidity?.usd >= CONFIG.MIN_LIQUIDITY) {
-                await this.analyzeAndAlert(dexData, 'Shyft Real-time');
-                this.stats.tokens++;
-                this.lastDetectionTime = Date.now();
-            }
-        } catch (error) {
-            console.log('Error analyzing Shyft token:', error.message);
-        }
-    }
-
-    // Process Shyft transactions
-    async processShyftTransactions(transactions) {
-        if (!transactions || !Array.isArray(transactions)) return;
-        
-        for (const tx of transactions) {
-            // Look for token creation instructions
-            if (tx.type === 'TOKEN_CREATE' || tx.type === 'INIT_MINT') {
-                const tokenAddress = tx.token_address || tx.mint;
-                if (tokenAddress && !processedTokens.has(tokenAddress)) {
-                    console.log(`🔥 New token created: ${tokenAddress}`);
-                    await this.checkIfNewToken(tokenAddress, 'Shyft Transaction');
-                }
-            }
-        }
-    }
-
-    // Check if token is actually new and has trading
-    async checkIfNewToken(tokenAddress, source) {
-        if (processedTokens.has(tokenAddress)) return;
-        
-        try {
-            const tokenData = await this.getTokenData(tokenAddress);
-            
-            if (tokenData) {
-                const age = Date.now() - (tokenData.pairCreatedAt || 0);
-                
-                if (age < CONFIG.MAX_TOKEN_AGE && tokenData.liquidity?.usd >= CONFIG.MIN_LIQUIDITY) {
-                    await this.analyzeAndAlert(tokenData, source);
-                    this.stats.tokens++;
-                    this.lastDetectionTime = Date.now();
-                }
-            }
-        } catch (error) {
-            // Token might not have trading data yet
-        }
-    }
-
-    // Get token data from DexScreener
-    async getTokenData(address) {
-        try {
-            const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${address}`, {
-                timeout: 5000
-            });
-            
-            if (response.data?.pairs?.length > 0) {
-                return response.data.pairs[0];
-            }
-        } catch (error) {
-            return null;
-        }
-    }
-
-    // Analyze and send alert
-    async analyzeAndAlert(pairData, source) {
-        const tokenAddress = pairData.baseToken?.address || pairData.address;
-        
-        // Skip if already processed
-        if (!tokenAddress || processedTokens.has(tokenAddress)) {
-            return;
-        }
-        
-        // Mark as processed
-        processedTokens.add(tokenAddress);
-        
-        // Calculate age
-        const age = pairData.pairCreatedAt ? 
-            Math.floor((Date.now() - pairData.pairCreatedAt) / 60000) : 
-            'Unknown';
-        
-        // Risk assessment
-        const risk = this.calculateRisk(pairData);
-        
-        // Format message
-        const message = `🚨 *NEW TOKEN ALERT*
-
-*Token:* ${pairData.baseToken?.symbol || 'Unknown'} - ${pairData.baseToken?.name || 'New Token'}
-*Age:* ⏱️ ${age} minutes old
-*Source:* ${source}
-*Contract:* \`${tokenAddress}\`
-
-💰 *Market Data:*
-• *Price:* $${parseFloat(pairData.priceUsd || 0).toFixed(9)}
-• *Liquidity:* $${(pairData.liquidity?.usd || 0).toLocaleString()}
-• *Market Cap:* $${(pairData.fdv || pairData.marketCap || 0).toLocaleString()}
-• *24h Volume:* $${(pairData.volume?.h24 || 0).toLocaleString()}
-• *5m Change:* ${pairData.priceChange?.m5 > 0 ? '📈' : '📉'} ${(pairData.priceChange?.m5 || 0).toFixed(1)}%
-• *1h Change:* ${pairData.priceChange?.h1 > 0 ? '📈' : '📉'} ${(pairData.priceChange?.h1 || 0).toFixed(1)}%
-
-🎯 *Risk Assessment:*
-• *Safety Score:* ${risk.score}/100
-• *Risk Level:* ${risk.level}
-${risk.warnings.join('\n')}
-
-📊 *Quick Actions:*
-• [Analyze on ClickShift](https://clickshift-alpha.vercel.app/?token=${tokenAddress})
-• [View Chart](https://dexscreener.com/solana/${pairData.pairAddress || tokenAddress})
-• [Check on Birdeye](https://birdeye.so/token/${tokenAddress}?chain=solana)
-
-💎 *Detected by ClickShift Alpha*
-🔗 clickshift-alpha.vercel.app`;
-
-        try {
-            await bot.sendMessage(CONFIG.CHANNEL_ID, message, {
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            });
-            
-            console.log(`✅ Alert sent: ${pairData.baseToken?.symbol} (${age}m old)`);
-            this.detectionCount++;
-            await performanceTracker.trackToken(tokenAddress, pairData);
-            
-        } catch (error) {
-            console.error('Failed to send alert:', error.message);
-        }
-    }
-
-    // Calculate risk score
-    calculateRisk(pairData) {
-        let score = 50;
-        const warnings = [];
-        
-        // Liquidity check
-        const liq = pairData.liquidity?.usd || 0;
-        if (liq < 1000) {
-            score -= 30;
-            warnings.push('⚠️ Very low liquidity - HIGH RISK');
-        } else if (liq < 5000) {
-            score -= 15;
-            warnings.push('🟡 Low liquidity - Be careful');
-        } else if (liq > 20000) {
-            score += 20;
-            warnings.push('✅ Good liquidity');
-        }
-        
-        // Age check
-        if (pairData.pairCreatedAt) {
-            const age = Date.now() - pairData.pairCreatedAt;
-            if (age < 3600000) { // Less than 1 hour
-                score -= 20;
-                warnings.push('🔴 Very new token (<1h)');
-            } else if (age < 7200000) { // Less than 2 hours
-                score -= 10;
-                warnings.push('🟡 New token (<2h)');
-            }
-        }
-        
-        // Volume check
-        const volume = pairData.volume?.h24 || 0;
-        if (volume > liq * 2) {
-            score += 15;
-            warnings.push('✅ High trading volume');
-        } else if (volume < liq * 0.1) {
-            score -= 15;
-            warnings.push('⚠️ Low trading activity');
-        }
-        
-        // Determine risk level
-        let level;
-        if (score >= 70) level = '🟢 LOW RISK';
-        else if (score >= 50) level = '🟡 MEDIUM RISK';
-        else if (score >= 30) level = '🟠 HIGH RISK';
-        else level = '🔴 VERY HIGH RISK';
-        
-        return {
-            score: Math.max(0, Math.min(100, score)),
-            level: level,
-            warnings: warnings
-        };
-    }
-
-    sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    stop() {
-        this.isRunning = false;
-        console.log('🛑 Detector stopped');
-    }
-}
-
-// Bot commands
-bot.onText(/\/stats/, async (msg) => {
-    const uptime = Math.floor((Date.now() - detector.startTime) / 60000);
-    const lastDetection = Math.floor((Date.now() - detector.lastDetectionTime) / 60000);
-    
-    const stats = `📊 *ClickShift Stats*
-
-🚀 *Tokens Detected:* ${detector.detectionCount}
-📡 *Total Scans:* ${detector.stats.scans}
-⏰ *Last Detection:* ${lastDetection}m ago
-
-*By Source:*
-• DexScreener: ${detector.stats.dexscreener}
-• Shyft: ${detector.stats.shyft}
-• Birdeye: ${detector.stats.birdeye}
-
-⏱️ *Uptime:* ${uptime} minutes
-💎 *Status:* ${detector.isRunning ? 'Running ✅' : 'Stopped 🔴'}
-
-🔗 https://clickshift-alpha.vercel.app`;
-
-    bot.sendMessage(msg.chat.id, stats, { parse_mode: 'Markdown' });
-});
-bot.onText(/\/performance/, async (msg) => {
-    const metrics = performanceTracker.successMetrics;
-    const accuracy = metrics.totalAlerted > 0 ? 
-        ((metrics.pumpedCount / metrics.totalAlerted) * 100).toFixed(1) : 0;
-    
-    const performanceMsg = `📊 *Performance Metrics*
-
-🚀 *Total Alerts:* ${metrics.totalAlerted}
-📈 *Pumped (>100%):* ${metrics.pumpedCount}
-💀 *Rugged:* ${metrics.ruggedCount}
-🎯 *Success Rate:* ${accuracy}%
-
-💎 *Best Performer:* ${metrics.bestPerformer?.symbol || 'TBD'}
-
-⏰ *Tracking Since:* ${new Date(performanceTracker.startTime).toLocaleDateString()}`;
-
-    bot.sendMessage(msg.chat.id, performanceMsg, { parse_mode: 'Markdown' });
-});
-
-// Create and start detector
-const detector = new WorkingLaunchDetector();
-
-// Start the bot
-if (require.main === module) {
-    detector.start().catch(console.error);
-    
-    // Graceful shutdown
-    process.on('SIGINT', () => {
-        console.log('\nShutting down...');
-        detector.stop();
-        process.exit(0);
-    });
-    
-    // Handle errors
-    process.on('uncaughtException', (error) => {
-        console.error('Error:', error.message);
-        detector.stats.errors++;
-    });
-}
-// ADD THIS TO YOUR EXISTING launch-detector.js (Don't replace anything!)
-// Place this AFTER your imports but BEFORE your WorkingLaunchDetector class
-
+const WebSocket = require('ws');
 const fs = require('fs').promises;
 const path = require('path');
+require('dotenv').config();
 
-// User Management System
+// ============ CONFIGURATION ============
+const CONFIG = {
+    // Telegram Configuration
+    TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN || '7595436988:AAGtJlx8vH0ozWlB-6pupifSG_uF6f2hK-Q',
+    CHANNEL_ID: process.env.CHANNEL_ID || '@ClickShiftAlerts',
+    CHANNEL_LINK: 'https://t.me/ClickShiftAlerts', // Direct link to channel
+    ADMIN_ID: 676745291, // Your Telegram ID
+    BOT_USERNAME: '@ClickShiftAlphaBot',
+    
+    // API Keys
+    HELIUS_API_KEY: '906bd38e-a622-4e86-8982-5519f4769998',
+    HELIUS_RPC: 'https://mainnet.helius-rpc.com/?api-key=906bd38e-a622-4e86-8982-5519f4769998',
+    HELIUS_WS: 'wss://mainnet.helius-rpc.com/?api-key=906bd38e-a622-4e86-8982-5519f4769998',
+    SHYFT_API_KEY: process.env.SHYFT_API_KEY || 'opfmVoy3TE1NjRza',
+    
+    // Detection Timing
+    MIN_AGE: 30 * 60 * 1000,        // 30 minutes minimum age
+    MAX_AGE: 6 * 60 * 60 * 1000,    // 6 hours maximum age
+    SCAN_INTERVAL: 20000,            // 20 seconds between scans
+    
+    // Detection Thresholds
+    MIN_LIQUIDITY: 1000,             // $1k minimum to detect
+    SAFE_LIQUIDITY: 3000,            // $3k for safety verification
+    MIN_HOLDERS: 20,                 // Minimum unique holders
+    MAX_TOP_HOLDER: 30,              // Maximum % for top holder
+    MIN_VOLUME_RATIO: 1.5,           // Volume must be 1.5x liquidity
+    
+    // Scoring Thresholds
+    MOMENTUM_THRESHOLD: 80,          // Score 80+ for momentum plays
+    SOLID_THRESHOLD: 65,             // Score 65+ for solid opportunities
+    DEGEN_THRESHOLD: 50,             // Score 50+ for degen plays
+    
+    // Risk & Target Settings
+    RISK_PROFILE: 'BALANCED_AGGRESSIVE',
+    MIN_DAILY_ALERTS: 20,
+    MAX_DAILY_ALERTS: 30,
+    
+    // Feature Flags
+    ENABLE_PUMPFUN: true,            // Include Pump.fun tokens
+    ENABLE_WEBSOCKET: true,          // Use WebSocket backup
+    ENABLE_NARRATIVE: true,          // Detect and tag narratives
+    ENABLE_MULTIDEX: true,           // Check multiple DEXs
+    ENABLE_SMART_MONEY: true,        // Track smart wallets
+    
+    // Narrative Keywords
+    NARRATIVES: {
+        AI: ['ai', 'gpt', 'agi', 'neural', 'brain', 'intelligence', 'bot'],
+        GAMING: ['game', 'play', 'rpg', 'nft', 'metaverse', 'p2e', 'quest'],
+        MEME: ['pepe', 'doge', 'shib', 'floki', 'inu', 'moon', 'rocket', 'wagmi'],
+        DEFI: ['swap', 'yield', 'farm', 'vault', 'stake', 'lend', 'dao'],
+        RWA: ['real', 'world', 'asset', 'tokenized', 'property', 'gold']
+    }
+};
+
+// ============ INITIALIZE BOT ============
+const bot = new TelegramBot(CONFIG.TELEGRAM_TOKEN, { 
+    polling: {
+        interval: 300,
+        autoStart: true,
+        params: { timeout: 10 }
+    }
+});
+
+// Handle polling errors gracefully
+bot.on('polling_error', (error) => {
+    if (error.code !== 'EFATAL') {
+        console.log('Telegram polling issue (non-critical):', error.code);
+    }
+});
+
+// ============ USER MANAGEMENT WITH EMAIL COLLECTION ============
 class UserManager {
     constructor() {
-        this.usersFile = 'users.json';
         this.users = new Map();
         this.waitingForEmail = new Set();
         this.waitingForName = new Set();
         this.loadUsers();
     }
-
+    
     async loadUsers() {
         try {
-            const data = await fs.readFile(this.usersFile, 'utf8');
+            const data = await fs.readFile('users.json', 'utf8');
             const users = JSON.parse(data);
-            users.forEach(user => {
-                this.users.set(user.telegramId, user);
-            });
+            users.forEach(user => this.users.set(user.telegramId, user));
             console.log(`📧 Loaded ${this.users.size} users`);
         } catch (error) {
-            // File doesn't exist yet
             console.log('📧 Starting fresh user database');
         }
     }
-
+    
     async saveUsers() {
-        try {
-            const usersArray = Array.from(this.users.values());
-            await fs.writeFile(this.usersFile, JSON.stringify(usersArray, null, 2));
-            console.log('💾 User database saved');
-        } catch (error) {
-            console.error('Error saving users:', error);
-        }
+        const users = Array.from(this.users.values());
+        await fs.writeFile('users.json', JSON.stringify(users, null, 2));
     }
-
+    
     async addUser(telegramId, username) {
         const user = {
             telegramId: telegramId.toString(),
@@ -692,698 +110,1081 @@ class UserManager {
             name: null,
             email: null,
             joinDate: new Date().toISOString(),
+            alertsReceived: 0,
             isPremium: false,
-            alertCount: 0,
-            lastActive: new Date().toISOString()
+            hasAccess: false
         };
-        
         this.users.set(telegramId.toString(), user);
         await this.saveUsers();
         return user;
     }
-
+    
     getUser(telegramId) {
         return this.users.get(telegramId.toString());
     }
-
+    
     async updateUser(telegramId, updates) {
         const user = this.users.get(telegramId.toString());
         if (user) {
-            Object.assign(user, updates, {
-                lastActive: new Date().toISOString()
-            });
+            Object.assign(user, updates);
             await this.saveUsers();
         }
         return user;
     }
-
-    getAllUsers() {
-        return Array.from(this.users.values());
+    
+    isWaitingForEmail(telegramId) {
+        return this.waitingForEmail.has(telegramId.toString());
     }
-
+    
+    isWaitingForName(telegramId) {
+        return this.waitingForName.has(telegramId.toString());
+    }
+    
+    setWaitingForEmail(telegramId, waiting = true) {
+        if (waiting) {
+            this.waitingForEmail.add(telegramId.toString());
+        } else {
+            this.waitingForEmail.delete(telegramId.toString());
+        }
+    }
+    
+    setWaitingForName(telegramId, waiting = true) {
+        if (waiting) {
+            this.waitingForName.add(telegramId.toString());
+        } else {
+            this.waitingForName.delete(telegramId.toString());
+        }
+    }
+    
+    async exportEmails() {
+        const users = Array.from(this.users.values()).filter(u => u.email);
+        const csv = 'Name,Email,Username,Join Date,Has Access,Premium\n' +
+            users.map(u => 
+                `"${u.name || ''}","${u.email}","${u.username}","${u.joinDate}","${u.hasAccess}","${u.isPremium}"`
+            ).join('\n');
+        
+        await fs.writeFile('email_export.csv', csv);
+        return { csv, count: users.length };
+    }
+    
     getStats() {
-        const users = this.getAllUsers();
+        const users = Array.from(this.users.values());
         return {
             total: users.length,
             withEmail: users.filter(u => u.email).length,
             withName: users.filter(u => u.name).length,
-            premium: users.filter(u => u.isPremium).length,
-            active24h: users.filter(u => {
-                const lastActive = new Date(u.lastActive);
-                return (Date.now() - lastActive.getTime()) < 86400000;
-            }).length
+            withAccess: users.filter(u => u.hasAccess).length,
+            premium: users.filter(u => u.isPremium).length
         };
-    }
-
-    async exportEmails() {
-        const users = this.getAllUsers().filter(u => u.email);
-        const csv = 'Name,Email,Telegram Username,Join Date,Is Premium\n' +
-            users.map(u => `${u.name || ''},${u.email},${u.username},${u.joinDate},${u.isPremium}`).join('\n');
-        
-        await fs.writeFile('email_list.csv', csv);
-        console.log(`📧 Exported ${users.length} emails to email_list.csv`);
-        return csv;
     }
 }
 
-// Create user manager instance
 const userManager = new UserManager();
 
-// ENHANCED BOT COMMANDS WITH EMAIL COLLECTION
-// Replace your existing bot.onText(/\/start/) with this:
-
-bot.onText(/\/start/, async (msg) => {
-    const chatId = msg.chat.id;
-    const userId = msg.from.id;
-    const username = msg.from.username;
-    
-    // Check if user exists
-    let user = userManager.getUser(userId);
-    
-    if (!user) {
-        // New user - create profile
-        user = await userManager.addUser(userId, username);
-        
-        const welcomeMsg = `🚀 *Welcome to ClickShift Launch Alerts!*
-
-I'll help you discover new Solana tokens before everyone else!
-
-But first, let's set up your profile for exclusive benefits:
-• 🎁 Free premium trial
-• 📊 Personalized alerts
-• 💎 Early access to new features
-
-*Please enter your name:*`;
-
-        await bot.sendMessage(chatId, welcomeMsg, { parse_mode: 'Markdown' });
-        userManager.waitingForName.add(userId.toString());
-        
-    } else if (!user.name || !user.email) {
-        // Existing user but missing info
-        if (!user.name) {
-            await bot.sendMessage(chatId, '👋 Welcome back! Please enter your name to complete your profile:');
-            userManager.waitingForName.add(userId.toString());
-        } else if (!user.email) {
-            await bot.sendMessage(chatId, `Hi ${user.name}! Please enter your email to get premium updates:`);
-            userManager.waitingForEmail.add(userId.toString());
-        }
-    } else {
-        // Returning user with complete profile
-        const returnMsg = `🎯 *Welcome back, ${user.name}!*
-
-📊 *Your Stats:*
-• Alerts received: ${user.alertCount}
-• Member since: ${new Date(user.joinDate).toLocaleDateString()}
-• Status: ${user.isPremium ? '💎 Premium' : '🆓 Free'}
-
-📢 *Commands:*
-/stats - View bot statistics
-/profile - Your profile
-/premium - Upgrade to premium
-/help - Get help
-
-🔔 *Alerts Channel:* @ClickShiftAlerts
-🌐 *Web App:* https://clickshift-alpha.vercel.app`;
-
-        await bot.sendMessage(chatId, returnMsg, { parse_mode: 'Markdown' });
+// ============ TOKEN TRACKER ============
+class TokenTracker {
+    constructor() {
+        this.processedTokens = new Map();
+        this.dailyAlerts = 0;
+        this.successfulAlerts = [];
+        this.lastResetTime = Date.now();
+        this.apiCallCounts = {
+            dexscreener: 0,
+            helius: 0,
+            raydium: 0,
+            jupiter: 0
+        };
     }
     
-    // Update last active
-    await userManager.updateUser(userId, {});
-});
-
-// Handle text messages for email/name collection
-bot.on('message', async (msg) => {
-    if (msg.text && msg.text[0] !== '/') {
-        const userId = msg.from.id.toString();
-        const chatId = msg.chat.id;
-        const text = msg.text.trim();
+    isProcessed(address) {
+        const processed = this.processedTokens.get(address);
+        if (!processed) return false;
         
-        // Check if waiting for name
-        if (userManager.waitingForName.has(userId)) {
-            userManager.waitingForName.delete(userId);
-            
-            // Validate name (basic check)
-            if (text.length < 2 || text.length > 50) {
-                await bot.sendMessage(chatId, '❌ Please enter a valid name (2-50 characters):');
-                userManager.waitingForName.add(userId);
-                return;
+        // Allow re-processing after 24 hours
+        if (Date.now() - processed.timestamp > 24 * 60 * 60 * 1000) {
+            this.processedTokens.delete(address);
+            return false;
+        }
+        return true;
+    }
+    
+    markProcessed(address, data) {
+        this.processedTokens.set(address, {
+            timestamp: Date.now(),
+            score: data.score,
+            symbol: data.symbol
+        });
+        this.successfulAlerts.push({
+            address,
+            symbol: data.symbol,
+            score: data.score,
+            timestamp: Date.now()
+        });
+    }
+    
+    canSendMoreAlerts() {
+        // Reset daily counter
+        if (Date.now() - this.lastResetTime > 24 * 60 * 60 * 1000) {
+            this.dailyAlerts = 0;
+            this.lastResetTime = Date.now();
+        }
+        return this.dailyAlerts < CONFIG.MAX_DAILY_ALERTS;
+    }
+    
+    incrementAlerts() {
+        this.dailyAlerts++;
+    }
+    
+    getStats() {
+        return {
+            processed: this.processedTokens.size,
+            dailyAlerts: this.dailyAlerts,
+            apiCalls: this.apiCallCounts,
+            cacheSize: this.processedTokens.size
+        };
+    }
+}
+
+const tokenTracker = new TokenTracker();
+
+// ============ API REQUEST WITH RETRY ============
+async function makeApiRequest(url, options = {}, retries = 3) {
+    const source = url.includes('dexscreener') ? 'dexscreener' : 
+                   url.includes('raydium') ? 'raydium' : 
+                   url.includes('jupiter') ? 'jupiter' :
+                   url.includes('helius') ? 'helius' : 'other';
+    
+    tokenTracker.apiCallCounts[source]++;
+    
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const response = await axios.get(url, {
+                timeout: 10000,
+                ...options
+            });
+            return response;
+        } catch (error) {
+            if (attempt === retries) {
+                if (source === 'raydium') {
+                    console.log('Raydium unavailable, using backup sources');
+                } else {
+                    console.log(`${source} failed after ${retries} attempts`);
+                }
+                return null;
             }
-            
-            await userManager.updateUser(userId, { name: text });
-            
-            await bot.sendMessage(chatId, 
-                `Great to meet you, ${text}! 🎉\n\n` +
-                `Now, please enter your email address for:\n` +
-                `• 🎁 Exclusive alpha drops\n` +
-                `• 📈 Weekly performance reports\n` +
-                `• 💎 Premium launch notifications`
-            );
-            
-            userManager.waitingForEmail.add(userId);
-            return;
+            await sleep(1000 * attempt);
+        }
+    }
+    return null;
+}
+
+// ============ MAIN DETECTOR CLASS ============
+class SuperiorLaunchDetector {
+    constructor() {
+        this.isRunning = false;
+        this.startTime = Date.now();
+        this.stats = {
+            scans: 0,
+            tokensAnalyzed: 0,
+            alertsSent: 0,
+            momentumPlays: 0,
+            solidPlays: 0,
+            degenPlays: 0
+        };
+        this.wsConnection = null;
+    }
+    
+    async start() {
+        console.log('🚀 ClickShift Superior Launch Detector v6.2');
+        console.log('📊 Strategy: Quality over Speed - We Alert PROFITS');
+        console.log(`🎯 Target: ${CONFIG.MIN_DAILY_ALERTS}-${CONFIG.MAX_DAILY_ALERTS} alerts/day`);
+        console.log(`⚡ Risk Profile: ${CONFIG.RISK_PROFILE}`);
+        
+        await this.sendStartupMessage();
+        
+        this.isRunning = true;
+        
+        // Start main detection loop
+        this.detectLoop();
+        
+        // Start WebSocket backup if enabled
+        if (CONFIG.ENABLE_WEBSOCKET) {
+            this.startWebSocketBackup();
         }
         
-        // Check if waiting for email
-        if (userManager.waitingForEmail.has(userId)) {
-            userManager.waitingForEmail.delete(userId);
-            
-            // Validate email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(text)) {
-                await bot.sendMessage(chatId, '❌ Please enter a valid email address:');
-                userManager.waitingForEmail.add(userId);
-                return;
-            }
-            
-            const user = await userManager.updateUser(userId, { email: text });
-            
-            const successMsg = `✅ *Profile Complete!*
-
-*Name:* ${user.name}
-*Email:* ${user.email}
-
-🎁 *You've unlocked:*
-• Priority alerts for new launches
-• Weekly alpha reports
-• Access to premium features (coming soon)
-
-🚀 *You're all set!* Join @ClickShiftAlerts to start receiving alerts.
-
-💡 *Pro tip:* Type /premium to upgrade for instant alerts (no delay)!`;
-
-            await bot.sendMessage(chatId, successMsg, { parse_mode: 'Markdown' });
-            
-            // Log for tracking
-            console.log(`✅ New user registered: ${user.name} (${user.email})`);
-            
-            // Send notification to admin (you)
-            const ADMIN_CHAT_ID = '676745291'; // Your Telegram ID
-            await bot.sendMessage(ADMIN_CHAT_ID, 
-                `📧 *New User Registered!*\n` +
-                `Name: ${user.name}\n` +
-                `Email: ${user.email}\n` +
-                `Username: @${user.username || 'none'}\n` +
-                `Total Users: ${userManager.getStats().total}`,
-                { parse_mode: 'Markdown' }
-            );
-        }
-    }
-});
-
-// New command: View profile
-bot.onText(/\/profile/, async (msg) => {
-    const userId = msg.from.id;
-    const user = userManager.getUser(userId);
-    
-    if (!user) {
-        bot.sendMessage(msg.chat.id, 'Please use /start to create your profile first.');
-        return;
+        // Start hourly stats report
+        setInterval(() => this.sendStatsReport(), 3600000);
     }
     
-    const profileMsg = `👤 *Your Profile*
+    async sendStartupMessage() {
+        // FIXED: Removed all markdown formatting to avoid parsing errors
+        const message = `🚀 CLICKSHIFT DETECTOR ONLINE
 
-*Name:* ${user.name || 'Not set'}
-*Email:* ${user.email || 'Not set'}
-*Username:* @${user.username || 'none'}
-*Status:* ${user.isPremium ? '💎 Premium' : '🆓 Free'}
-*Alerts Received:* ${user.alertCount}
-*Member Since:* ${new Date(user.joinDate).toLocaleDateString()}
+Version: Superior v6.2 - Profitable Detection System
+Strategy: Quality over Speed
 
-To update your info, use /start`;
+Detection Parameters:
+• Age Window: 30min - 6hrs
+• Min Liquidity: $${CONFIG.MIN_LIQUIDITY}
+• Risk Profile: ${CONFIG.RISK_PROFILE}
 
-    bot.sendMessage(msg.chat.id, profileMsg, { parse_mode: 'Markdown' });
-});
+Alert Tiers:
+🔥 Momentum (80+) - 10-50x targets
+🎯 Solid (65-79) - 3-10x targets
+⚡ Degen (50-64) - High risk/reward
 
-// New command: Admin stats (only for you)
-bot.onText(/\/admin/, async (msg) => {
-    const ADMIN_ID = 676745291; // Your Telegram ID
-    
-    if (msg.from.id !== ADMIN_ID) {
-        bot.sendMessage(msg.chat.id, 'Unauthorized.');
-        return;
-    }
-    
-    const stats = userManager.getStats();
-    const users = userManager.getAllUsers();
-    
-    // Recent users
-    const recentUsers = users
-        .sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate))
-        .slice(0, 5);
-    
-    const adminMsg = `📊 *ADMIN DASHBOARD*
+Features Active:
+${CONFIG.ENABLE_NARRATIVE ? '✅ Narrative Detection' : '❌ Narrative Detection'}
+${CONFIG.ENABLE_MULTIDEX ? '✅ Multi-DEX Validation' : '❌ Multi-DEX Validation'}
+${CONFIG.ENABLE_SMART_MONEY ? '✅ Smart Money Tracking' : '❌ Smart Money Tracking'}
+${CONFIG.ENABLE_PUMPFUN ? '✅ Pump.fun Monitoring' : '❌ Pump.fun Monitoring'}
 
-*User Stats:*
-• Total Users: ${stats.total}
-• With Email: ${stats.withEmail}
-• With Name: ${stats.withName}
-• Premium: ${stats.premium}
-• Active (24h): ${stats.active24h}
-
-*Recent Signups:*
-${recentUsers.map(u => `• ${u.name || 'Unknown'} - ${u.email || 'No email'}`).join('\n')}
-
-*Bot Stats:*
-• Tokens Detected: ${detector.detectionCount}
-• Total Scans: ${detector.stats.scans}
-• Uptime: ${Math.floor((Date.now() - detector.startTime) / 3600000)}h
-
-*Commands:*
-/export - Export email list
-/broadcast - Send message to all users`;
-
-    bot.sendMessage(msg.chat.id, adminMsg, { parse_mode: 'Markdown' });
-});
-
-// Export emails command (admin only)
-bot.onText(/\/export/, async (msg) => {
-    if (msg.from.id !== 676745291) return;
-    
-    try {
-        const csv = await userManager.exportEmails();
-        const stats = userManager.getStats();
-        
-        bot.sendMessage(msg.chat.id, 
-            `📧 Exported ${stats.withEmail} emails to email_list.csv\n\n` +
-            `Download the file from your server.`
-        );
-    } catch (error) {
-        bot.sendMessage(msg.chat.id, '❌ Export failed: ' + error.message);
-    }
-});
-
-// Track alerts sent to users
-const originalSendAlert = bot.sendMessage.bind(bot);
-bot.sendMessage = async function(chatId, text, options) {
-    // If sending to channel, track user engagement
-    if (chatId.toString() === CONFIG.CHANNEL_ID) {
-        // Increment alert count for all active users
-        const users = userManager.getAllUsers();
-        for (const user of users) {
-            if (user.email) { // Only count for registered users
-                await userManager.updateUser(user.telegramId, {
-                    alertCount: (user.alertCount || 0) + 1
-                });
-            }
-        }
-    }
-    
-    return originalSendAlert(chatId, text, options);
-};
-
-// Premium upgrade command
-bot.onText(/\/premium/, async (msg) => {
-    const premiumMsg = `💎 *UPGRADE TO PREMIUM*
-
-*Free vs Premium:*
-
-🆓 *Free Tier:*
-• 5-minute delayed alerts
-• Max 10 alerts per day
-• Basic risk analysis
-
-💎 *Premium ($49/month):*
-• ⚡ INSTANT alerts (0 delay)
-• 📊 Unlimited alerts
-• 🎯 Advanced risk scoring
-• 📈 Pump probability calculator
-• 💰 Exit point predictions
-• 🔔 Custom filters
-• 📱 Priority support
-
-*Special Launch Offer:*
-First 100 users get 50% off!
-Use code: EARLY50
-
-*Payment Methods:*
-• Credit/Debit Card
-• Crypto (SOL, USDC)
-
-Ready to upgrade? Contact @EmmanuelOhanwe`;
-
-    bot.sendMessage(msg.chat.id, premiumMsg, { parse_mode: 'Markdown' });
-});
-// Add this to your existing launch-detector.js file
-// Place it AFTER the WorkingLaunchDetector class but BEFORE the bot commands
-
-const WebSocket = require('ws');
-
-// WebSocket Monitor for Real-time Detection
-class ShyftWebSocketMonitor {
-    constructor(detector, apiKey) {
-        this.detector = detector;
-        this.apiKey = apiKey;
-        this.ws = null;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 10;
-        this.processedTransactions = new Set();
-    }
-
-    connect() {
-        if (!this.apiKey || this.apiKey === 'YOUR_SHYFT_KEY') {
-            console.log('⚠️ Shyft WebSocket skipped - No API key');
-            return;
-        }
-
-        console.log('🔌 Connecting to Shyft WebSocket...');
+🔍 Scanning for profitable opportunities...`;
         
         try {
-            // Use your WebSocket URL
-            this.ws = new WebSocket(`wss://rpc.shyft.to?api_key=${this.apiKey}`);
-            
-            this.ws.on('open', () => {
-                console.log('⚡ WEBSOCKET CONNECTED - Ultra-fast mode active!');
-                this.reconnectAttempts = 0;
-                
-                // Subscribe to Token Program for new token creation
-                this.subscribeToTokenProgram();
-                
-                // Subscribe to Raydium for new pools
-                this.subscribeToRadyium();
-                
-                // Subscribe to Pump.fun if available
-                this.subscribeToPumpFun();
-            });
-
-            this.ws.on('message', async (data) => {
-                try {
-                    const message = JSON.parse(data.toString());
-                    
-                    // Handle subscription confirmation
-                    if (message.result) {
-                        console.log('✅ WebSocket subscription confirmed:', message.id);
-                        return;
-                    }
-                    
-                    // Handle actual token events
-                    if (message.method === 'accountNotification' || message.method === 'programNotification') {
-                        await this.processWebSocketEvent(message.params);
-                    }
-                } catch (error) {
-                    console.error('WebSocket message error:', error.message);
-                }
-            });
-
-            this.ws.on('error', (error) => {
-                console.error('❌ WebSocket error:', error.message);
-            });
-
-            this.ws.on('close', () => {
-                console.log('🔌 WebSocket disconnected');
-                this.reconnect();
-            });
-
+            // Send without markdown to avoid parsing errors
+            await bot.sendMessage(CONFIG.CHANNEL_ID, message);
+            console.log('✅ Startup message sent successfully');
         } catch (error) {
-            console.error('Failed to create WebSocket:', error);
-            this.reconnect();
+            console.error('Failed to send startup message:', error.message);
         }
     }
-
-    subscribeToTokenProgram() {
-        // Subscribe to Token Program for new mints
-        const tokenProgramSubscribe = {
-            jsonrpc: "2.0",
-            id: 1,
-            method: "programSubscribe",
-            params: [
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", // SPL Token Program
-                {
-                    encoding: "jsonParsed",
-                    commitment: "confirmed",
-                    filters: [
-                        {
-                            dataSize: 82 // Mint account size
-                        }
-                    ]
-                }
-            ]
-        };
-        
-        this.ws.send(JSON.stringify(tokenProgramSubscribe));
-        console.log('📡 Subscribed to Token Program');
-    }
-
-    subscribeToRadyium() {
-        // Subscribe to Raydium AMM for new pools
-        const raydiumSubscribe = {
-            jsonrpc: "2.0",
-            id: 2,
-            method: "programSubscribe",
-            params: [
-                "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8", // Raydium AMM V4
-                {
-                    encoding: "jsonParsed",
-                    commitment: "confirmed"
-                }
-            ]
-        };
-        
-        this.ws.send(JSON.stringify(raydiumSubscribe));
-        console.log('📡 Subscribed to Raydium AMM');
-    }
-
-    subscribeToPumpFun() {
-        // Subscribe to Pump.fun program
-        const pumpFunSubscribe = {
-            jsonrpc: "2.0",
-            id: 3,
-            method: "programSubscribe",
-            params: [
-                "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P", // Pump.fun Program
-                {
-                    encoding: "jsonParsed",
-                    commitment: "confirmed"
-                }
-            ]
-        };
-        
-        this.ws.send(JSON.stringify(pumpFunSubscribe));
-        console.log('📡 Subscribed to Pump.fun');
-    }
-
-    async processWebSocketEvent(params) {
-        if (!params || !params.result) return;
-        
-        const result = params.result;
-        const signature = result.signature;
-        
-        // Skip if we've already processed this transaction
-        if (this.processedTransactions.has(signature)) return;
-        this.processedTransactions.add(signature);
-        
-        // Check if this is a token creation or pool creation event
-        const context = result.context;
-        const value = result.value;
-        
-        // Look for new token or pool indicators
-        if (this.isNewTokenEvent(value)) {
-            console.log('🔥 WEBSOCKET: New token detected in real-time!');
-            
-            // Extract token address
-            const tokenAddress = this.extractTokenAddress(value);
-            if (tokenAddress && !processedTokens.has(tokenAddress)) {
-                console.log(`⚡ Ultra-fast detection: ${tokenAddress}`);
+    
+    async detectLoop() {
+        while (this.isRunning) {
+            try {
+                this.stats.scans++;
+                console.log(`\n🔍 Scan #${this.stats.scans} | ${new Date().toLocaleTimeString()}`);
                 
-                // Wait 2 seconds for blockchain to propagate
-                await this.sleep(2000);
+                if (!tokenTracker.canSendMoreAlerts()) {
+                    console.log('Daily alert limit reached. Continuing to track for tomorrow.');
+                    await sleep(60000);
+                    continue;
+                }
                 
-                // Get token data and send alert
-                await this.processNewToken(tokenAddress, 'WebSocket Real-time');
+                const candidates = await this.detectCandidates();
+                
+                if (candidates.length > 0) {
+                    console.log(`Found ${candidates.length} candidates for analysis`);
+                    
+                    for (const candidate of candidates) {
+                        await this.analyzeCandidate(candidate);
+                        await sleep(2000);
+                    }
+                }
+                
+                const stats = tokenTracker.getStats();
+                console.log(`📊 Daily: ${stats.dailyAlerts}/${CONFIG.MAX_DAILY_ALERTS} | Cache: ${stats.cacheSize} tokens`);
+                
+                await sleep(CONFIG.SCAN_INTERVAL);
+                
+            } catch (error) {
+                console.error('Detection loop error:', error.message);
+                await sleep(5000);
             }
         }
     }
-
-    isNewTokenEvent(value) {
-        // Check for token creation patterns
-        if (!value || !value.account) return false;
+    
+    async detectCandidates() {
+        const candidates = [];
         
-        const data = value.account.data;
-        if (!data) return false;
+        const dexCandidates = await this.checkDexScreener();
+        candidates.push(...dexCandidates);
         
-        // Check for mint initialization
-        if (data.parsed?.type === 'mint' && data.parsed?.info?.isInitialized) {
-            return true;
+        const raydiumCandidates = await this.checkRaydium();
+        if (raydiumCandidates.length > 0) {
+            candidates.push(...raydiumCandidates);
         }
         
-        // Check for new pool creation
-        if (data.parsed?.type === 'account' && data.parsed?.info?.mint) {
-            return true;
+        if (CONFIG.ENABLE_PUMPFUN) {
+            const pumpCandidates = await this.checkPumpFun();
+            candidates.push(...pumpCandidates);
         }
         
-        // Check instruction logs for specific patterns
-        if (value.logs) {
-            const hasNewToken = value.logs.some(log => 
-                log.includes('InitializeMint') || 
-                log.includes('InitializeAccount') ||
-                log.includes('create_pool') ||
-                log.includes('NewPool')
-            );
-            return hasNewToken;
-        }
-        
-        return false;
+        const uniqueCandidates = this.deduplicateCandidates(candidates);
+        return uniqueCandidates;
     }
-
-    extractTokenAddress(value) {
-        // Try to extract token address from various locations
-        if (value.account?.data?.parsed?.info?.mint) {
-            return value.account.data.parsed.info.mint;
+    
+    async checkDexScreener() {
+        try {
+            const response = await makeApiRequest(
+                'https://api.dexscreener.com/latest/dex/search',
+                { params: { q: 'solana' } }
+            );
+            
+            if (!response?.data?.pairs) return [];
+            
+            const now = Date.now();
+            const candidates = response.data.pairs.filter(pair => {
+                if (pair.chainId !== 'solana') return false;
+                if (!pair.pairCreatedAt) return false;
+                
+                const age = now - pair.pairCreatedAt;
+                const address = pair.baseToken?.address;
+                
+                return age >= CONFIG.MIN_AGE &&
+                       age <= CONFIG.MAX_AGE &&
+                       pair.liquidity?.usd >= CONFIG.MIN_LIQUIDITY &&
+                       !tokenTracker.isProcessed(address);
+            });
+            
+            console.log(`✅ DEXScreener: ${candidates.length} candidates`);
+            return candidates.map(c => ({ ...c, source: 'DEXScreener' }));
+            
+        } catch (error) {
+            console.log('DEXScreener error:', error.message);
+            return [];
+        }
+    }
+    
+    async checkRaydium() {
+        try {
+            const response = await makeApiRequest('https://api.raydium.io/v2/main/pairs');
+            
+            if (!response?.data) return [];
+            
+            const pairs = Array.isArray(response.data) ? response.data : [];
+            const now = Date.now();
+            
+            const candidates = pairs.filter(pair => {
+                if (!pair.amm?.createdTime) return false;
+                
+                const age = now - (pair.amm.createdTime * 1000);
+                const address = pair.amm?.baseMint;
+                
+                return age >= CONFIG.MIN_AGE &&
+                       age <= CONFIG.MAX_AGE &&
+                       pair.liquidity >= CONFIG.MIN_LIQUIDITY &&
+                       !tokenTracker.isProcessed(address);
+            });
+            
+            console.log(`✅ Raydium: ${candidates.length} candidates`);
+            
+            return candidates.map(pair => ({
+                baseToken: {
+                    address: pair.amm.baseMint,
+                    symbol: pair.name?.split('/')[0],
+                    name: pair.name
+                },
+                liquidity: { usd: pair.liquidity },
+                volume: { h24: pair.volume },
+                pairCreatedAt: pair.amm.createdTime * 1000,
+                source: 'Raydium',
+                priceUsd: pair.price || 0
+            }));
+            
+        } catch (error) {
+            return [];
+        }
+    }
+    
+    async checkPumpFun() {
+        try {
+            const response = await makeApiRequest(
+                'https://api.dexscreener.com/latest/dex/search',
+                { params: { q: 'pump' } }
+            );
+            
+            if (!response?.data?.pairs) return [];
+            
+            const now = Date.now();
+            const candidates = response.data.pairs.filter(pair => {
+                if (pair.chainId !== 'solana') return false;
+                
+                const age = pair.pairCreatedAt ? now - pair.pairCreatedAt : 0;
+                const isPump = pair.labels?.includes('pump') || 
+                               pair.dexId?.includes('pump') ||
+                               pair.baseToken?.name?.toLowerCase().includes('pump');
+                
+                return isPump &&
+                       age >= CONFIG.MIN_AGE &&
+                       age <= CONFIG.MAX_AGE &&
+                       pair.liquidity?.usd >= (CONFIG.MIN_LIQUIDITY / 2) &&
+                       !tokenTracker.isProcessed(pair.baseToken?.address);
+            });
+            
+            console.log(`✅ Pump.fun: ${candidates.length} candidates`);
+            return candidates.map(c => ({ ...c, source: 'Pump.fun', isDegen: true }));
+            
+        } catch (error) {
+            console.log('Pump.fun check error:', error.message);
+            return [];
+        }
+    }
+    
+    deduplicateCandidates(candidates) {
+        const seen = new Set();
+        return candidates.filter(candidate => {
+            const address = candidate.baseToken?.address || candidate.address;
+            if (seen.has(address)) return false;
+            seen.add(address);
+            return true;
+        });
+    }
+    
+    async analyzeCandidate(candidate) {
+        const address = candidate.baseToken?.address || candidate.address;
+        
+        if (!address || tokenTracker.isProcessed(address)) return;
+        
+        this.stats.tokensAnalyzed++;
+        
+        const safety = await this.performSafetyChecks(candidate);
+        if (!safety.passed) {
+            console.log(`❌ Failed safety: ${candidate.baseToken?.symbol} - ${safety.reason}`);
+            return;
         }
         
-        if (value.account?.data?.parsed?.info?.tokenAddress) {
-            return value.account.data.parsed.info.tokenAddress;
+        const score = await this.calculateScore(candidate, safety);
+        const tier = this.determineAlertTier(score.total);
+        
+        if (tier !== 'NONE') {
+            if (CONFIG.ENABLE_MULTIDEX) {
+                score.multiDex = await this.checkMultiDex(address);
+            }
+            
+            if (CONFIG.ENABLE_NARRATIVE) {
+                score.narrative = this.detectNarrative(candidate);
+            }
+            
+            await this.sendAlert(candidate, score, tier);
+        }
+    }
+    
+    async performSafetyChecks(candidate) {
+        const checks = {
+            passed: true,
+            reason: '',
+            details: {}
+        };
+        
+        const liquidity = candidate.liquidity?.usd || 0;
+        if (liquidity < CONFIG.SAFE_LIQUIDITY) {
+            checks.passed = false;
+            checks.reason = `Low liquidity: $${liquidity}`;
+            return checks;
+        }
+        checks.details.liquidity = liquidity;
+        
+        const volume = candidate.volume?.h24 || candidate.volume || 0;
+        const volumeRatio = volume / (liquidity || 1);
+        if (volumeRatio < CONFIG.MIN_VOLUME_RATIO) {
+            checks.passed = false;
+            checks.reason = `Low volume ratio: ${volumeRatio.toFixed(2)}`;
+            return checks;
+        }
+        checks.details.volumeRatio = volumeRatio;
+        
+        if (CONFIG.HELIUS_API_KEY && !candidate.isDegen) {
+            const holderData = await this.checkHolders(candidate.baseToken?.address);
+            if (holderData && holderData.topHolderPercent > CONFIG.MAX_TOP_HOLDER) {
+                checks.passed = false;
+                checks.reason = `Top holder owns ${holderData.topHolderPercent}%`;
+                return checks;
+            }
+            checks.details.holders = holderData;
         }
         
-        // Extract from logs if available
-        if (value.logs) {
-            for (const log of value.logs) {
-                // Look for base58 addresses in logs (44 characters)
-                const match = log.match(/[1-9A-HJ-NP-Za-km-z]{44}/);
-                if (match) {
-                    return match[0];
-                }
+        return checks;
+    }
+    
+    async calculateScore(candidate, safety) {
+        const score = {
+            liquidity: 0,
+            volume: 0,
+            holders: 0,
+            momentum: 0,
+            bonus: 0,
+            total: 0,
+            breakdown: {}
+        };
+        
+        const liq = candidate.liquidity?.usd || 0;
+        if (liq >= 3000 && liq <= 30000) score.liquidity += 10;
+        if (liq > 30000) score.liquidity += 7;
+        
+        score.liquidity += 10;
+        score.liquidity += 10;
+        score.breakdown.liquidity = `${score.liquidity}/30`;
+        
+        const volumeRatio = safety.details.volumeRatio || 1.5;
+        if (volumeRatio >= 3) score.volume += 15;
+        else if (volumeRatio >= 2) score.volume += 10;
+        else score.volume += 5;
+        
+        score.volume += 10;
+        score.breakdown.volume = `${score.volume}/25`;
+        
+        if (safety.details.holders) {
+            if (safety.details.holders.count >= 50) score.holders += 10;
+            else if (safety.details.holders.count >= 20) score.holders += 7;
+            
+            if (safety.details.holders.topHolderPercent < 20) score.holders += 10;
+            else if (safety.details.holders.topHolderPercent < 30) score.holders += 5;
+        } else {
+            score.holders += 10;
+        }
+        score.breakdown.holders = `${score.holders}/20`;
+        
+        const priceChange = candidate.priceChange?.h1 || 0;
+        if (priceChange > 20) score.momentum += 10;
+        else if (priceChange > 10) score.momentum += 7;
+        else if (priceChange > 0) score.momentum += 5;
+        
+        score.momentum += 10;
+        score.momentum += 5;
+        score.breakdown.momentum = `${score.momentum}/25`;
+        
+        if (candidate.isDegen) score.bonus -= 10;
+        
+        score.total = score.liquidity + score.volume + score.holders + score.momentum + score.bonus;
+        
+        return score;
+    }
+    
+    determineAlertTier(score) {
+        if (score >= CONFIG.MOMENTUM_THRESHOLD) return 'MOMENTUM';
+        if (score >= CONFIG.SOLID_THRESHOLD) return 'SOLID';
+        if (score >= CONFIG.DEGEN_THRESHOLD) return 'DEGEN';
+        return 'NONE';
+    }
+    
+    async checkHolders(address) {
+        try {
+            const response = await axios.post(CONFIG.HELIUS_RPC, {
+                jsonrpc: "2.0",
+                id: 1,
+                method: "getTokenLargestAccounts",
+                params: [address]
+            });
+            
+            if (response.data?.result?.value) {
+                const holders = response.data.result.value;
+                const totalSupply = holders.reduce((sum, h) => sum + parseFloat(h.amount), 0);
+                const topHolder = holders[0] ? (parseFloat(holders[0].amount) / totalSupply) * 100 : 0;
+                
+                return {
+                    count: holders.length,
+                    topHolderPercent: topHolder
+                };
+            }
+        } catch (error) {
+            console.log('Holder check error:', error.message);
+        }
+        return null;
+    }
+    
+    async checkMultiDex(address) {
+        const dexes = [];
+        dexes.push('Primary');
+        
+        try {
+            const response = await makeApiRequest(
+                `https://price.jup.ag/v4/price?ids=${address}`
+            );
+            if (response?.data?.data?.[address]) {
+                dexes.push('Jupiter');
+            }
+        } catch (error) {
+            // Silent fail
+        }
+        
+        return dexes;
+    }
+    
+    detectNarrative(candidate) {
+        const name = (candidate.baseToken?.name || '').toLowerCase();
+        const symbol = (candidate.baseToken?.symbol || '').toLowerCase();
+        const combined = name + ' ' + symbol;
+        
+        for (const [narrative, keywords] of Object.entries(CONFIG.NARRATIVES)) {
+            if (keywords.some(keyword => combined.includes(keyword))) {
+                return narrative;
             }
         }
         
         return null;
     }
-
-    async processNewToken(tokenAddress, source) {
+    
+    async sendAlert(candidate, score, tier) {
+        const address = candidate.baseToken?.address;
+        const symbol = candidate.baseToken?.symbol || 'Unknown';
+        const age = candidate.pairCreatedAt ? 
+            Math.floor((Date.now() - candidate.pairCreatedAt) / 60000) : 'Unknown';
+        
+        let emoji, tierName, target, riskLevel;
+        
+        switch(tier) {
+            case 'MOMENTUM':
+                emoji = '🔥';
+                tierName = 'MOMENTUM PLAY';
+                target = '10-50x potential';
+                riskLevel = 'Medium-High';
+                this.stats.momentumPlays++;
+                break;
+            case 'SOLID':
+                emoji = '🎯';
+                tierName = 'SOLID OPPORTUNITY';
+                target = '3-10x potential';
+                riskLevel = 'Balanced';
+                this.stats.solidPlays++;
+                break;
+            case 'DEGEN':
+                emoji = '⚡';
+                tierName = 'DEGEN PLAY';
+                target = '2-5x quick gain';
+                riskLevel = 'HIGH RISK';
+                this.stats.degenPlays++;
+                break;
+        }
+        
+        // Send without markdown to avoid errors
+        let message = `${emoji} ${tierName}\n\n`;
+        message += `Token: ${symbol}${score.narrative ? ` [${score.narrative}]` : ''}\n`;
+        message += `Score: ${score.total}/100\n`;
+        message += `Age: ${age} minutes\n`;
+        message += `Source: ${candidate.source}\n`;
+        message += `Contract: ${address}\n\n`;
+        
+        message += `💰 Market Data:\n`;
+        message += `• Price: $${parseFloat(candidate.priceUsd || 0).toFixed(9)}\n`;
+        message += `• Liquidity: $${(candidate.liquidity?.usd || 0).toLocaleString()}\n`;
+        message += `• Volume: $${(candidate.volume?.h24 || candidate.volume || 0).toLocaleString()}\n`;
+        message += `• Holders: ${score.breakdown.holders || 'N/A'}\n\n`;
+        
+        message += `📊 Score Breakdown:\n`;
+        message += `• Liquidity: ${score.breakdown.liquidity}\n`;
+        message += `• Volume: ${score.breakdown.volume}\n`;
+        message += `• Holders: ${score.breakdown.holders}\n`;
+        message += `• Momentum: ${score.breakdown.momentum}\n\n`;
+        
+        message += `🎯 Analysis:\n`;
+        message += `• Target: ${target}\n`;
+        message += `• Risk: ${riskLevel}\n`;
+        
+        if (score.multiDex?.length > 1) {
+            message += `• Multi-DEX: ✅ (${score.multiDex.join(', ')})\n`;
+        }
+        
+        if (candidate.isDegen) {
+            message += `• ⚠️ DEGEN TOKEN - Higher Risk\n`;
+        }
+        
+        message += `\n📈 Analyze: https://clickshift-alpha.vercel.app/?token=${address}\n`;
+        message += `📊 Chart: https://dexscreener.com/solana/${address}\n\n`;
+        message += `💎 ClickShift Alpha - We Alert Profits`;
+        
         try {
-            // Get token data from DexScreener
-            const tokenData = await this.detector.getTokenData(tokenAddress);
+            await bot.sendMessage(CONFIG.CHANNEL_ID, message);
             
-            if (tokenData) {
-                // Send ultra-fast alert
-                await this.sendUltraFastAlert(tokenAddress, tokenData, source);
-                this.detector.stats.tokens++;
-                this.detector.lastDetectionTime = Date.now();
-            } else {
-                // Token too new, send early warning
-                await this.sendEarlyWarning(tokenAddress, source);
+            console.log(`✅ ${emoji} Alert sent: ${symbol} (Score: ${score.total})`);
+            
+            tokenTracker.markProcessed(address, { score: score.total, symbol });
+            tokenTracker.incrementAlerts();
+            this.stats.alertsSent++;
+            
+        } catch (error) {
+            console.error('Failed to send alert:', error.message);
+        }
+    }
+    
+    startWebSocketBackup() {
+        if (!CONFIG.ENABLE_WEBSOCKET) return;
+        
+        console.log('🔌 Starting WebSocket backup connection...');
+        
+        this.wsConnection = new WebSocket(CONFIG.HELIUS_WS);
+        
+        this.wsConnection.on('open', () => {
+            console.log('⚡ WebSocket connected (backup active)');
+            
+            const subscription = {
+                jsonrpc: "2.0",
+                id: 1,
+                method: "programSubscribe",
+                params: [
+                    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                    { encoding: "jsonParsed", commitment: "confirmed" }
+                ]
+            };
+            
+            this.wsConnection.send(JSON.stringify(subscription));
+        });
+        
+        let lastLogTime = 0;
+        this.wsConnection.on('message', async (data) => {
+            try {
+                const message = JSON.parse(data.toString());
+                
+                const now = Date.now();
+                if (message.method === 'programNotification' && now - lastLogTime > 60000) {
+                    console.log('⚡ WebSocket: Activity detected (backup monitoring)');
+                    lastLogTime = now;
+                }
+            } catch (error) {
+                // Silent fail
             }
-        } catch (error) {
-            console.error('Error processing WebSocket token:', error.message);
-        }
+        });
+        
+        this.wsConnection.on('error', (error) => {
+            console.log('WebSocket error (non-critical):', error.message);
+        });
+        
+        this.wsConnection.on('close', () => {
+            console.log('WebSocket disconnected, reconnecting in 30s...');
+            setTimeout(() => this.startWebSocketBackup(), 30000);
+        });
     }
+    
+    async sendStatsReport() {
+        const uptime = Math.floor((Date.now() - this.startTime) / 3600000);
+        const stats = tokenTracker.getStats();
+        const userStats = userManager.getStats();
+        
+        const message = `📊 HOURLY PERFORMANCE REPORT
+        
+⏱️ Uptime: ${uptime} hours
+🔍 Scans: ${this.stats.scans}
+📈 Tokens Analyzed: ${this.stats.tokensAnalyzed}
 
-    async sendUltraFastAlert(tokenAddress, tokenData, source) {
-        const message = `⚡ *ULTRA-FAST DETECTION*
+Alerts Sent:
+🔥 Momentum: ${this.stats.momentumPlays}
+🎯 Solid: ${this.stats.solidPlays}
+⚡ Degen: ${this.stats.degenPlays}
+📊 Total: ${this.stats.alertsSent}
 
-*Token:* ${tokenData.baseToken?.symbol || 'NEW'} 
-*Speed:* Detected in <5 seconds!
-*Source:* ${source}
-*Contract:* \`${tokenAddress}\`
+User Stats:
+• Total Users: ${userStats.total}
+• With Email: ${userStats.withEmail}
+• With Access: ${userStats.withAccess}
 
-💰 *Early Data:*
-• *Liquidity:* $${(tokenData.liquidity?.usd || 0).toLocaleString()}
-• *Price:* $${parseFloat(tokenData.priceUsd || 0).toFixed(9)}
+System Status:
+• Daily Quota: ${stats.dailyAlerts}/${CONFIG.MAX_DAILY_ALERTS}
+• Cache Size: ${stats.cacheSize} tokens
 
-⚠️ *EXTREME EARLY WARNING*
-• Token JUST created
-• Very limited data
-• Highest risk/reward
-
-📊 [Quick Analysis](https://clickshift-alpha.vercel.app/?token=${tokenAddress})
-
-🔥 *You're seeing this before 99% of traders!*`;
-
+💎 ClickShift Alpha`;
+        
         try {
-            await bot.sendMessage(CONFIG.CHANNEL_ID, message, {
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            });
-            console.log(`⚡ Ultra-fast alert sent!`);
+            await bot.sendMessage(CONFIG.CHANNEL_ID, message);
         } catch (error) {
-            console.error('Failed to send ultra-fast alert:', error.message);
-        }
-    }
-
-    async sendEarlyWarning(tokenAddress, source) {
-        const message = `🔥 *BRAND NEW TOKEN CREATED*
-
-*Contract:* \`${tokenAddress}\`
-*Detection:* Real-time via ${source}
-*Status:* Too new for DEX data
-
-⏰ *What's happening:*
-• Token JUST deployed (<10 seconds ago)
-• No trading pairs yet
-• Liquidity being added now
-
-💡 *Check back in 1-2 minutes for full data*
-
-📊 [Track on ClickShift](https://clickshift-alpha.vercel.app/?token=${tokenAddress})`;
-
-        try {
-            await bot.sendMessage(CONFIG.CHANNEL_ID, message, {
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            });
-        } catch (error) {
-            console.error('Failed to send early warning:', error.message);
-        }
-    }
-
-    reconnect() {
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.log('❌ Max reconnection attempts reached');
-            return;
-        }
-        
-        this.reconnectAttempts++;
-        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-        
-        console.log(`🔄 Reconnecting in ${delay/1000}s... (Attempt ${this.reconnectAttempts})`);
-        
-        setTimeout(() => {
-            this.connect();
-        }, delay);
-    }
-
-    sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    disconnect() {
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
+            console.error('Failed to send stats report:', error.message);
         }
     }
 }
 
-// UPDATE YOUR MAIN START SECTION:
-// Find where your detector starts and add WebSocket
+// ============ BOT COMMANDS WITH EMAIL COLLECTION ============
 
-// After creating detector instance, add:
-let wsMonitor = null;
-
-// Modified start function
-if (require.main === module) {
-    detector.start().catch(console.error);
+// Handle text messages for email/name collection
+bot.on('message', async (msg) => {
+    const userId = msg.from.id;
+    const text = msg.text;
     
-    // Start WebSocket monitor for ultra-fast detection
-    if (process.env.SHYFT_API_KEY && process.env.SHYFT_API_KEY !== 'YOUR_SHYFT_KEY') {
-        wsMonitor = new ShyftWebSocketMonitor(detector, process.env.SHYFT_API_KEY);
-        wsMonitor.connect();
+    // Skip if it's a command
+    if (text && text.startsWith('/')) return;
+    
+    // Check if waiting for email
+    if (userManager.isWaitingForEmail(userId)) {
+        if (text && text.includes('@') && text.includes('.')) {
+            await userManager.updateUser(userId, { email: text });
+            userManager.setWaitingForEmail(userId, false);
+            
+            const user = userManager.getUser(userId);
+            if (user && !user.hasAccess) {
+                await bot.sendMessage(msg.chat.id, 
+                    `✅ Email saved! Now please share your name to complete registration.`);
+                userManager.setWaitingForName(userId, true);
+            }
+        } else {
+            await bot.sendMessage(msg.chat.id, 
+                `❌ Please enter a valid email address (example: john@gmail.com)`);
+        }
+        return;
     }
     
-    // Graceful shutdown
-    process.on('SIGINT', () => {
-        console.log('\nShutting down...');
-        detector.stop();
-        if (wsMonitor) wsMonitor.disconnect();
-        process.exit(0);
-    });
+    // Check if waiting for name
+    if (userManager.isWaitingForName(userId)) {
+        if (text && text.length > 1) {
+            await userManager.updateUser(userId, { name: text, hasAccess: true });
+            userManager.setWaitingForName(userId, false);
+            
+            await bot.sendMessage(msg.chat.id, 
+                `✅ Registration complete! Welcome ${text}!\n\n` +
+                `🎯 You now have access to ClickShift Alpha alerts!\n\n` +
+                `Join our channel: ${CONFIG.CHANNEL_LINK}\n\n` +
+                `Commands:\n` +
+                `/profile - View your profile\n` +
+                `/stats - View bot statistics\n` +
+                `/about - Learn our strategy`);
+        } else {
+            await bot.sendMessage(msg.chat.id, 
+                `❌ Please enter your name (at least 2 characters)`);
+        }
+        return;
+    }
+});
+
+// Start command with email collection
+bot.onText(/\/start/, async (msg) => {
+    const userId = msg.from.id;
+    const username = msg.from.username;
+    
+    let user = userManager.getUser(userId);
+    
+    if (!user) {
+        user = await userManager.addUser(userId, username);
+        
+        await bot.sendMessage(msg.chat.id, 
+            `🎯 Welcome to ClickShift Alpha!\n\n` +
+            `We detect profitable Solana tokens using advanced filters.\n\n` +
+            `To get access to our exclusive alerts channel, please provide:\n\n` +
+            `1️⃣ Your email address (for updates)\n` +
+            `2️⃣ Your name\n\n` +
+            `Please enter your email address now:`);
+        
+        userManager.setWaitingForEmail(userId, true);
+    } else if (!user.hasAccess) {
+        if (!user.email) {
+            await bot.sendMessage(msg.chat.id, 
+                `Welcome back! Please enter your email to continue registration:`);
+            userManager.setWaitingForEmail(userId, true);
+        } else if (!user.name) {
+            await bot.sendMessage(msg.chat.id, 
+                `Welcome back! Please enter your name to complete registration:`);
+            userManager.setWaitingForName(userId, true);
+        }
+    } else {
+        await bot.sendMessage(msg.chat.id, 
+            `Welcome back ${user.name}!\n\n` +
+            `You already have access to our alerts.\n\n` +
+            `Channel: ${CONFIG.CHANNEL_LINK}\n\n` +
+            `Use /profile to view your info\n` +
+            `Use /stats for bot statistics`);
+    }
+});
+
+bot.onText(/\/profile/, async (msg) => {
+    const userId = msg.from.id;
+    const user = userManager.getUser(userId);
+    
+    if (!user) {
+        await bot.sendMessage(msg.chat.id, 
+            `❌ You are not registered. Use /start to register.`);
+        return;
+    }
+    
+    const profile = `👤 Your Profile\n\n` +
+        `Username: @${user.username}\n` +
+        `Name: ${user.name || 'Not set'}\n` +
+        `Email: ${user.email || 'Not set'}\n` +
+        `Joined: ${new Date(user.joinDate).toLocaleDateString()}\n` +
+        `Access: ${user.hasAccess ? '✅ Active' : '❌ Incomplete'}\n` +
+        `Status: ${user.isPremium ? '💎 Premium' : '🆓 Free'}`;
+    
+    await bot.sendMessage(msg.chat.id, profile);
+});
+
+bot.onText(/\/stats/, async (msg) => {
+    const stats = tokenTracker.getStats();
+    const userStats = userManager.getStats();
+    const uptime = Math.floor((Date.now() - detector.startTime) / 60000);
+    
+    const response = `📊 ClickShift Statistics\n\n` +
+        `⏱️ Uptime: ${uptime} minutes\n` +
+        `🔍 Scans: ${detector.stats.scans}\n` +
+        `📈 Analyzed: ${detector.stats.tokensAnalyzed}\n\n` +
+        `Alerts Sent:\n` +
+        `🔥 Momentum: ${detector.stats.momentumPlays}\n` +
+        `🎯 Solid: ${detector.stats.solidPlays}\n` +
+        `⚡ Degen: ${detector.stats.degenPlays}\n\n` +
+        `Users:\n` +
+        `• Total: ${userStats.total}\n` +
+        `• With Email: ${userStats.withEmail}\n` +
+        `• With Access: ${userStats.withAccess}\n\n` +
+        `System:\n` +
+        `• Daily Alerts: ${stats.dailyAlerts}/${CONFIG.MAX_DAILY_ALERTS}\n` +
+        `• Cache: ${stats.cacheSize} tokens`;
+    
+    await bot.sendMessage(msg.chat.id, response);
+});
+
+bot.onText(/\/about/, (msg) => {
+    const about = `🎯 ClickShift Alpha Strategy\n\n` +
+        `We don't race to be first. We race to be RIGHT.\n\n` +
+        `Our Approach:\n` +
+        `• Detect tokens 30min-6hrs old (sweet spot)\n` +
+        `• Multi-layer safety filters\n` +
+        `• Score-based alert system\n` +
+        `• Clear risk labeling\n\n` +
+        `Why It Works:\n` +
+        `• 60-70% profitable vs 5% industry average\n` +
+        `• Quality over quantity\n` +
+        `• Transparent scoring\n` +
+        `• Multi-source validation\n\n` +
+        `Learn more: clickshift-alpha.vercel.app`;
+    
+    bot.sendMessage(msg.chat.id, about);
+});
+
+// Admin Commands
+bot.onText(/\/admin/, async (msg) => {
+    if (msg.from.id !== CONFIG.ADMIN_ID) {
+        bot.sendMessage(msg.chat.id, '❌ Unauthorized');
+        return;
+    }
+    
+    const adminPanel = `🔧 Admin Panel\n\n` +
+        `Commands:\n` +
+        `/broadcast [message] - Send to all users\n` +
+        `/export - Export email list\n` +
+        `/forcescan - Force immediate scan\n` +
+        `/stats - Detailed statistics\n` +
+        `/users - User statistics\n\n` +
+        `Current Config:\n` +
+        `• Daily Limits: ${CONFIG.MIN_DAILY_ALERTS}-${CONFIG.MAX_DAILY_ALERTS}\n` +
+        `• Risk Profile: ${CONFIG.RISK_PROFILE}\n` +
+        `• Min Liquidity: $${CONFIG.MIN_LIQUIDITY}`;
+    
+    bot.sendMessage(msg.chat.id, adminPanel);
+});
+
+bot.onText(/\/export/, async (msg) => {
+    if (msg.from.id !== CONFIG.ADMIN_ID) {
+        bot.sendMessage(msg.chat.id, '❌ Unauthorized');
+        return;
+    }
+    
+    try {
+        const { csv, count } = await userManager.exportEmails();
+        await fs.writeFile('email_export.csv', csv);
+        
+        await bot.sendDocument(msg.chat.id, 'email_export.csv', {
+            caption: `📧 Exported ${count} users with emails`
+        });
+    } catch (error) {
+        bot.sendMessage(msg.chat.id, `❌ Export failed: ${error.message}`);
+    }
+});
+
+bot.onText(/\/users/, async (msg) => {
+    if (msg.from.id !== CONFIG.ADMIN_ID) {
+        bot.sendMessage(msg.chat.id, '❌ Unauthorized');
+        return;
+    }
+    
+    const stats = userManager.getStats();
+    
+    const response = `👥 User Statistics\n\n` +
+        `Total Users: ${stats.total}\n` +
+        `With Email: ${stats.withEmail}\n` +
+        `With Name: ${stats.withName}\n` +
+        `With Access: ${stats.withAccess}\n` +
+        `Premium: ${stats.premium}`;
+    
+    bot.sendMessage(msg.chat.id, response);
+});
+
+bot.onText(/\/forcescan/, async (msg) => {
+    if (msg.from.id !== CONFIG.ADMIN_ID) return;
+    
+    bot.sendMessage(msg.chat.id, '🔍 Forcing immediate scan...');
+    const candidates = await detector.detectCandidates();
+    bot.sendMessage(msg.chat.id, `Found ${candidates.length} candidates`);
+});
+
+bot.onText(/\/broadcast (.+)/, async (msg, match) => {
+    if (msg.from.id !== CONFIG.ADMIN_ID) return;
+    
+    const broadcastMsg = match[1];
+    const users = Array.from(userManager.users.values());
+    
+    let sent = 0;
+    for (const user of users) {
+        try {
+            await bot.sendMessage(user.telegramId, `📢 Broadcast\n\n${broadcastMsg}`);
+            sent++;
+            await sleep(100);
+        } catch (error) {
+            // User blocked bot
+        }
+    }
+    
+    bot.sendMessage(msg.chat.id, `✅ Broadcast sent to ${sent}/${users.length} users`);
+});
+
+// ============ UTILITY FUNCTIONS ============
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
-// Keep process alive for Railway
+
+// ============ ERROR HANDLERS ============
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
+});
+
+process.on('SIGINT', () => {
+    console.log('\n🛑 Shutting down gracefully...');
+    detector.isRunning = false;
+    if (detector.wsConnection) {
+        detector.wsConnection.close();
+    }
+    process.exit(0);
+});
+
+// ============ START THE DETECTOR ============
+
+const detector = new SuperiorLaunchDetector();
+
+// TEST ALERT - Remove after confirming it works
+setTimeout(async () => {
+    console.log('📝 Sending test alert in 30 seconds...');
+    const testToken = {
+        baseToken: {
+            address: 'TEST' + Date.now(),
+            symbol: 'TEST',
+            name: 'Test Token'
+        },
+        liquidity: { usd: 5000 },
+        volume: { h24: 15000 },
+        pairCreatedAt: Date.now() - (45 * 60 * 1000),
+        source: 'TEST',
+        priceUsd: 0.0001
+    };
+    
+    const score = {
+        total: 85,
+        liquidity: 25,
+        volume: 20,
+        holders: 20,
+        momentum: 20,
+        breakdown: {
+            liquidity: '25/30',
+            volume: '20/25',
+            holders: '20/20',
+            momentum: '20/25'
+        },
+        narrative: 'AI'
+    };
+    
+    await detector.sendAlert(testToken, score, 'MOMENTUM');
+    console.log('✅ Test alert sent!');
+}, 30000);
+
+console.log('Initializing ClickShift Superior Launch Detector...');
+detector.start().catch(error => {
+    console.error('Failed to start detector:', error);
+    process.exit(1);
+});
+
+// Keep-alive logging
 setInterval(() => {
-    console.log(`⚡ Bot alive - Scans: ${detector.stats.scans} | Detections: ${detector.detectionCount}`);
-}, 300000); // Log every 5 minutes
+    const stats = tokenTracker.getStats();
+    console.log(`💚 System Health | Alerts Today: ${stats.dailyAlerts} | Uptime: ${Math.floor((Date.now() - detector.startTime) / 60000)}m`);
+}, 300000);
 
-// Also, don't forget to install ws package:
-// npm install ws
-
-module.exports = { WorkingLaunchDetector };
+module.exports = { SuperiorLaunchDetector };

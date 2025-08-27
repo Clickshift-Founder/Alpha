@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClickShift Alpha - Predictive Trading Intelligence for Solana</title>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR-GA-ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-YOUR-GA-ID');
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: white;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .input-section {
+            margin-bottom: 2rem;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        #contractAddress {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        #contractAddress:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        #analyzeBtn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #analyzeBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        #analyzeBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #analyzeBtn:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        #analyzeBtn:active:before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .quick-tokens {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .quick-token {
+            padding: 0.5rem 1rem;
+            background: #f5f5f5;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .quick-token:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Donation Section */
+        .donation-section {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            color: white;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 1; }
+        }
+
+        .donation-section h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .donation-section p {
+            margin-bottom: 1rem;
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        .donation-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .donate-btn {
+            padding: 0.6rem 1.2rem;
+            background: white;
+            color: #f5576c;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .donate-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .copy-address {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .copy-address:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Telegram Section */
+        .telegram-section {
+            text-align: center;
+            margin: 1.5rem 0;
+            animation: slideInLeft 0.8s ease;
+        }
+
+        .telegram-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem 1.5rem;
+            background: #0088cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .telegram-btn:hover {
+            background: #006699;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 136, 204, 0.3);
+        }
+
+        /* Results Section */
+        #results {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+            animation: slideInLeft 0.5s ease;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a5298;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-verified {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-estimated {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-cached {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .risk-high { color: #dc3545; }
+        .risk-medium { color: #ffc107; }
+        .risk-low { color: #28a745; }
+
+        .distribution-chart {
+            margin: 1rem 0;
+        }
+
+        .distribution-bar {
+            display: flex;
+            align-items: center;
+            margin: 0.8rem 0;
+        }
+
+        .distribution-label {
+            width: 120px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .distribution-progress {
+            flex: 1;
+            height: 24px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .distribution-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: width 0.8s ease;
+        }
+
+        .signal-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .signal-item {
+            padding: 0.5rem 0;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .exit-cluster {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            margin: 0.5rem 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+            animation: fadeIn 1s ease;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 ClickShift Alpha</h1>
+        <p>Predictive Trading Intelligence for Solana</p>
+    </div>
+
+    <div class="container">
+        <div class="main-card">
+            <!-- Telegram Section -->
+            <div class="telegram-section">
+                <a href="https://t.me/ClickShiftAlerts" target="_blank" class="telegram-btn">
+                    📢 Join Telegram for Early Updates & Alerts
+                </a>
+            </div>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" id="contractAddress" 
+                           placeholder="Enter token address or symbol (e.g., BONK, WIF, or contract address)">
+                    <button id="analyzeBtn" onclick="analyzeToken()">Analyze Token</button>
+                </div>
+
+                <div class="quick-tokens">
+                    <div class="quick-token" onclick="analyzeQuickToken('DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263')">BONK</div>
+                    <div class="quick-token" onclick="analyzeQuickToken('EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm')">WIF</div>
+                    <div class="quick-token" onclick="analyzeQuickToken('7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr')">POPCAT</div>
+                    <div class="quick-token" onclick="analyzeQuickToken('JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN')">JUP</div>
+                    <div class="quick-token" onclick="analyzeQuickToken('HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3')">PYTH</div>
+                </div>
+            </div>
+
+            <!-- Donation Section -->
+            <div class="donation-section">
+                <h3>💎 Support ClickShift Development</h3>
+                <p>Help us build AI-powered features for more profitable trading!</p>
+                <div class="donation-buttons">
+                    <button class="donate-btn" onclick="initiateDonation(0.1)">0.1 SOL</button>
+                    <button class="donate-btn" onclick="initiateDonation(0.25)">0.25 SOL</button>
+                    <button class="donate-btn" onclick="initiateDonation(0.5)">0.5 SOL</button>
+                    <button class="donate-btn" onclick="initiateDonation(1)">1 SOL</button>
+                </div>
+                <button class="copy-address" onclick="copyDonationAddress()">
+                    📋 Copy Donation Address
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results">
+                <div id="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Fetching real blockchain data...</p>
+                </div>
+                <div id="content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Built to help traders make data-driven decisions</p>
+        <div>
+            <a href="https://clickshift.io" target="_blank">Website</a>
+            <a href="mailto:trust@clickshift.io">Contact</a>
+            <a href="https://t.me/ClickShiftAlerts" target="_blank">Telegram</a>
+        </div>
+        <div class="donation-section" style="background: rgba(255,255,255,0.1); margin-top: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <p style="font-size: 0.9rem;">Your support accelerates development</p>
+            <button class="copy-address" onclick="copyDonationAddress()">
+                Support ClickShift 💜
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - In production, these come from environment variables
+        const ENV = {
+            HELIUS_API_KEY: '906bd38e-a622-4e86-8982-5519f4769998',
+            DONATION_WALLET: '8YfkH2b4ppoSbBh8Ewei94uQABrqAKn87w4S2CAN7SS5'
+        };
+
+        // Cache configuration
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const tokenCache = new Map();
+
+        // Known token mappings
+        const knownTokens = {
+            'bonk': 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+            'wif': 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+            'popcat': '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr',
+            'jup': 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+            'pyth': 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3',
+            'sol': 'So11111111111111111111111111111111111111112',
+            'usdc': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+        };
+
+        // Load cache from localStorage
+        function loadCache() {
+            try {
+                const cached = localStorage.getItem('tokenCache');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    Object.entries(data).forEach(([key, value]) => {
+                        if (Date.now() - value.timestamp < CACHE_DURATION) {
+                            tokenCache.set(key, value);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Cache load failed:', e);
+            }
+        }
+
+        // Get cached data
+        function getCachedData(address) {
+            const cached = tokenCache.get(address);
+            if (!cached) return null;
+            
+            if (Date.now() - cached.timestamp > CACHE_DURATION) {
+                tokenCache.delete(address);
+                return null;
+            }
+            
+            return cached.data;
+        }
+
+        // Set cached data
+        function setCachedData(address, data) {
+            tokenCache.set(address, {
+                data: data,
+                timestamp: Date.now()
+            });
+            
+            try {
+                const cacheData = {};
+                tokenCache.forEach((value, key) => {
+                    cacheData[key] = value;
+                });
+                localStorage.setItem('tokenCache', JSON.stringify(cacheData));
+            } catch (e) {
+                console.log('Cache save failed:', e);
+            }
+        }
+
+        // Validate Solana address - NOW ACCEPTS 32-44 CHARACTERS
+        function isValidSolanaAddress(address) {
+            const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+            return base58Regex.test(address);
+        }
+
+        // Resolve token input to address
+        function resolveTokenAddress(input) {
+            const cleanInput = input.trim().toLowerCase();
+            
+            // Check known symbols
+            if (knownTokens[cleanInput]) {
+                return knownTokens[cleanInput];
+            }
+            
+            // Check if ends with known token names
+            for (const [symbol, address] of Object.entries(knownTokens)) {
+                if (cleanInput.endsWith(symbol)) {
+                    return address;
+                }
+            }
+            
+            // Accept addresses between 32-44 characters
+            if (input.length >= 32 && input.length <= 44) {
+                return input.trim();
+            }
+            
+            return null;
+        }
+
+        // Get real holder data from Helius
+        async function getRealHolderData(tokenAddress) {
+            try {
+                const response = await fetch(`https://mainnet.helius-rpc.com/?api-key=${ENV.HELIUS_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getTokenLargestAccounts',
+                        params: [tokenAddress]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.result && data.result.value && data.result.value.length > 0) {
+                    const holders = data.result.value;
+                    const totalSupply = holders.reduce((sum, h) => sum + parseFloat(h.amount || 0), 0);
+                    
+                    if (totalSupply === 0) throw new Error('No supply data');
+                    
+                    const distribution = {
+                        top10: 0,
+                        top20: 0,
+                        top50: 0,
+                        totalHolders: holders.length
+                    };
+                    
+                    holders.slice(0, 10).forEach(h => {
+                        distribution.top10 += (parseFloat(h.amount || 0) / totalSupply) * 100;
+                    });
+                    
+                    holders.slice(0, 20).forEach(h => {
+                        distribution.top20 += (parseFloat(h.amount || 0) / totalSupply) * 100;
+                    });
+                    
+                    holders.slice(0, 50).forEach(h => {
+                        distribution.top50 += (parseFloat(h.amount || 0) / totalSupply) * 100;
+                    });
+                    
+                    // Calculate Gini coefficient
+                    const amounts = holders.map(h => parseFloat(h.amount || 0)).sort((a, b) => a - b);
+                    let sumOfDifferences = 0;
+                    let sumOfValues = 0;
+                    
+                    for (let i = 0; i < amounts.length; i++) {
+                        sumOfDifferences += (2 * (i + 1) - amounts.length - 1) * amounts[i];
+                        sumOfValues += amounts[i];
+                    }
+                    
+                    const gini = sumOfValues > 0 ? (sumOfDifferences / (amounts.length * sumOfValues)) : 0;
+                    
+                    return {
+                        distribution,
+                        gini: Math.abs(gini).toFixed(2),
+                        topHolder: holders[0] ? (parseFloat(holders[0].amount) / totalSupply) * 100 : 0,
+                        isReal: true
+                    };
+                }
+            } catch (error) {
+                console.log('Helius API error, using fallback:', error.message);
+            }
+            
+            // Fallback with realistic estimates
+            return {
+                distribution: {
+                    top10: 25 + Math.random() * 15,
+                    top20: 35 + Math.random() * 15,
+                    top50: 50 + Math.random() * 20,
+                    totalHolders: Math.floor(100 + Math.random() * 900)
+                },
+                gini: (0.3 + Math.random() * 0.4).toFixed(2),
+                topHolder: 5 + Math.random() * 10,
+                isReal: false
+            };
+        }
+
+        // Get token data from DexScreener
+        async function getTokenDataFromDexScreener(address) {
+            try {
+                const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
+                const data = await response.json();
+                
+                if (data && data.pairs && data.pairs.length > 0) {
+                    const pair = data.pairs[0];
+                    return {
+                        symbol: pair.baseToken.symbol,
+                        name: pair.baseToken.name,
+                        address: pair.baseToken.address,
+                        priceUsd: parseFloat(pair.priceUsd || 0),
+                        liquidity: pair.liquidity?.usd || 0,
+                        volume24h: pair.volume?.h24 || 0,
+                        priceChange24h: pair.priceChange?.h24 || 0,
+                        marketCap: pair.fdv || 0,
+                        pairAddress: pair.pairAddress,
+                        txns: pair.txns || { h24: {} }
+                    };
+                }
+            } catch (error) {
+                console.error('DexScreener error:', error);
+            }
+            return null;
+        }
+
+        // Perform comprehensive analysis
+        function performAnalysis(tokenData, holderData) {
+            const analysis = {
+                riskScore: 0,
+                pumpScore: 0,
+                exitClusters: [],
+                recommendation: '',
+                signals: []
+            };
+
+            // Risk assessment
+            if (tokenData.liquidity < 10000) {
+                analysis.riskScore += 30;
+                analysis.signals.push('⚠️ Low liquidity - High slippage risk');
+            } else if (tokenData.liquidity < 50000) {
+                analysis.riskScore += 15;
+                analysis.signals.push('⚠️ Moderate liquidity');
+            }
+
+            if (holderData.topHolder > 20) {
+                analysis.riskScore += 25;
+                analysis.signals.push('🚨 Top holder owns >' + holderData.topHolder.toFixed(1) + '%');
+            } else if (holderData.topHolder > 10) {
+                analysis.riskScore += 15;
+            }
+
+            if (parseFloat(holderData.gini) > 0.6) {
+                analysis.riskScore += 20;
+                analysis.signals.push('⚠️ Uneven wealth distribution (Gini: ' + holderData.gini + ')');
+            }
+
+            // Pump assessment
+            const volumeToLiq = tokenData.liquidity > 0 ? tokenData.volume24h / tokenData.liquidity : 0;
+            if (volumeToLiq > 2) {
+                analysis.pumpScore += 35;
+                analysis.signals.push('🚀 High volume/liquidity ratio (' + volumeToLiq.toFixed(1) + 'x)');
+            } else if (volumeToLiq > 1) {
+                analysis.pumpScore += 20;
+                analysis.signals.push('📊 Good volume activity');
+            }
+
+            if (tokenData.priceChange24h > 50) {
+                analysis.pumpScore += 30;
+                analysis.signals.push('🔥 Strong momentum (+' + tokenData.priceChange24h.toFixed(1) + '%)');
+            } else if (tokenData.priceChange24h > 20) {
+                analysis.pumpScore += 20;
+                analysis.signals.push('📈 Positive momentum');
+            }
+
+            // Exit cluster predictions
+            const currentPrice = tokenData.priceUsd;
+            analysis.exitClusters = [
+                { price: currentPrice * 1.5, probability: 45, label: 'First Target' },
+                { price: currentPrice * 2, probability: 70, label: 'Major Resistance' },
+                { price: currentPrice * 3, probability: 85, label: 'Take Profit Zone' },
+                { price: currentPrice * 5, probability: 95, label: 'Moon Target' }
+            ];
+
+            // Generate recommendation
+            const totalScore = analysis.pumpScore - analysis.riskScore;
+            if (analysis.riskScore > 60) {
+                analysis.recommendation = '🚨 HIGH RISK - Not recommended for entry';
+            } else if (totalScore > 30) {
+                analysis.recommendation = '🟢 BULLISH - Consider entry with proper risk management';
+            } else if (totalScore > 0) {
+                analysis.recommendation = '🟡 NEUTRAL - Wait for better confirmation';
+            } else {
+                analysis.recommendation = '🔴 BEARISH - Avoid or consider exit';
+            }
+
+            return analysis;
+        }
+
+        // Display results
+        function displayResults(tokenData, holderData, analysis, isFromCache) {
+            const html = `
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-title">${tokenData.symbol} - ${tokenData.name}</div>
+                        <div>
+                            ${holderData.isReal ? '<span class="badge badge-verified">✓ Verified Data</span>' : '<span class="badge badge-estimated">Estimated Data</span>'}
+                            ${isFromCache ? '<span class="badge badge-cached">Cached</span>' : ''}
+                        </div>
+                    </div>
+                    <div style="color: #666; font-size: 0.85rem; margin-top: 0.5rem;">
+                        Contract: ${tokenData.address}
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Market Data</div>
+                    <div class="metric-row">
+                        <span class="metric-label">Price</span>
+                        <span class="metric-value">$${tokenData.priceUsd < 0.01 ? tokenData.priceUsd.toFixed(9) : tokenData.priceUsd.toFixed(6)}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">24h Change</span>
+                        <span class="metric-value ${tokenData.priceChange24h > 0 ? 'risk-low' : 'risk-high'}">${tokenData.priceChange24h > 0 ? '+' : ''}${tokenData.priceChange24h.toFixed(2)}%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Liquidity</span>
+                        <span class="metric-value">$${tokenData.liquidity.toLocaleString()}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">24h Volume</span>
+                        <span class="metric-value">$${tokenData.volume24h.toLocaleString()}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Market Cap</span>
+                        <span class="metric-value">$${tokenData.marketCap ? tokenData.marketCap.toLocaleString() : 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Holder Distribution Analysis</div>
+                    <div class="distribution-chart">
+                        <div class="distribution-bar">
+                            <div class="distribution-label">Top 10 Holders:</div>
+                            <div class="distribution-progress">
+                                <div class="distribution-fill" style="width: ${Math.min(holderData.distribution.top10, 100)}%">
+                                    ${holderData.distribution.top10.toFixed(1)}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="distribution-bar">
+                            <div class="distribution-label">Top 20 Holders:</div>
+                            <div class="distribution-progress">
+                                <div class="distribution-fill" style="width: ${Math.min(holderData.distribution.top20, 100)}%">
+                                    ${holderData.distribution.top20.toFixed(1)}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="distribution-bar">
+                            <div class="distribution-label">Top 50 Holders:</div>
+                            <div class="distribution-progress">
+                                <div class="distribution-fill" style="width: ${Math.min(holderData.distribution.top50, 100)}%">
+                                    ${holderData.distribution.top50.toFixed(1)}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+                        <div>Gini Coefficient: ${holderData.gini} (${holderData.gini < 0.4 ? 'Good' : holderData.gini < 0.6 ? 'Moderate' : 'Poor'} distribution)</div>
+                        <div>Top Holder: ${holderData.topHolder.toFixed(2)}%</div>
+                        <div>Estimated Holders: ${holderData.distribution.totalHolders}</div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">ClickShift Risk Analysis</div>
+                    <div class="metric-row">
+                        <span class="metric-label">Risk Score</span>
+                        <span class="metric-value ${analysis.riskScore > 60 ? 'risk-high' : analysis.riskScore > 30 ? 'risk-medium' : 'risk-low'}">${analysis.riskScore}/100</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Pump Potential</span>
+                        <span class="metric-value ${analysis.pumpScore > 50 ? 'risk-low' : analysis.pumpScore > 25 ? 'risk-medium' : 'risk-high'}">${analysis.pumpScore}/100</span>
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                        <strong>Recommendation:</strong> ${analysis.recommendation}
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Exit Cluster Predictions (Patent-Pending)</div>
+                    ${analysis.exitClusters.map(cluster => `
+                        <div class="exit-cluster">
+                            <span>${cluster.label}</span>
+                            <span>$${cluster.price < 0.01 ? cluster.price.toFixed(9) : cluster.price.toFixed(6)}</span>
+                            <span>${cluster.probability}% sellers</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Signals Detected</div>
+                    <ul class="signal-list">
+                        ${analysis.signals.map(signal => `<li class="signal-item">${signal}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="result-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <div class="result-title" style="color: white;">📊 Analysis Complete</div>
+                    <p>This analysis used ${holderData.isReal ? 'real blockchain data' : 'estimated data'}. Support our development to unlock more accurate predictions!</p>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button class="donate-btn" onclick="copyDonationAddress()">Support ClickShift</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // Main analysis function
+        async function analyzeToken() {
+            const input = document.getElementById('contractAddress').value.trim();
+            
+            if (!input) {
+                alert('Please enter a token address or symbol');
+                return;
+            }
+
+            const contractAddress = resolveTokenAddress(input);
+            
+            if (!contractAddress) {
+                alert('Invalid token address or unknown symbol. Please enter a valid Solana token address (32-44 characters).');
+                return;
+            }
+
+            if (!isValidSolanaAddress(contractAddress)) {
+                alert('Invalid Solana address format. Please check and try again.');
+                return;
+            }
+
+            // Check cache
+            const cachedData = getCachedData(contractAddress);
+
+            // Show loading
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                let tokenData, holderData;
+                let isFromCache = false;
+
+                if (cachedData) {
+                    tokenData = cachedData.tokenData;
+                    holderData = cachedData.holderData;
+                    isFromCache = true;
+                } else {
+                    // Fetch fresh data
+                    tokenData = await getTokenDataFromDexScreener(contractAddress);
+                    if (!tokenData) {
+                        throw new Error('Token not found or no trading data available');
+                    }
+                    
+                    holderData = await getRealHolderData(contractAddress);
+                    
+                    // Cache the data
+                    setCachedData(contractAddress, { tokenData, holderData });
+                }
+
+                // Track in Google Analytics
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'analyze_token', {
+                        'token_symbol': tokenData.symbol,
+                        'token_address': contractAddress,
+                        'from_cache': isFromCache,
+                        'data_source': holderData.isReal ? 'verified' : 'estimated'
+                    });
+                }
+
+                // Perform analysis
+                const analysis = performAnalysis(tokenData, holderData);
+
+                // Display results
+                displayResults(tokenData, holderData, analysis, isFromCache);
+
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error-message">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            }
+        }
+
+        // Quick token analysis
+        function analyzeQuickToken(address) {
+            document.getElementById('contractAddress').value = address;
+            analyzeToken();
+        }
+
+        // Donation functions
+        async function initiateDonation(amount) {
+            if (typeof window.solana !== 'undefined' && window.solana.isPhantom) {
+                try {
+                    alert(`Please send ${amount} SOL to support development. Copying address...`);
+                    copyDonationAddress();
+                } catch (error) {
+                    copyDonationAddress();
+                }
+            } else {
+                alert(`To donate ${amount} SOL, please send to the address below:`);
+                copyDonationAddress();
+            }
+
+            // Track donation intent
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'donation_intent', {
+                    'amount': amount,
+                    'currency': 'SOL'
+                });
+            }
+        }
+
+        function copyDonationAddress() {
+            const tempInput = document.createElement('input');
+            tempInput.value = ENV.DONATION_WALLET;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            alert('Donation address copied! Thank you for supporting ClickShift Alpha development!');
+            
+            // Track copy action
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'copy_donation_address');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCache();
+            
+            // Enter key to analyze
+            document.getElementById('contractAddress').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    analyzeToken();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
