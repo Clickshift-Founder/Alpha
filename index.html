@@ -1126,9 +1126,7 @@ function setCachedData(address, data) {
            document.getElementById('contractAddress').value = address;
            analyzeToken();
        }
-       // Get wallet from env or use default
-const DONATION_WALLET = process.env.NEXT_PUBLIC_DONATION_WALLET || '8YfkH2b4ppoSbBh8Ewei94uQABrqAKn87w4S2CAN7SS5';
-
+      // Donation function
 function initiateDonation(amount) {
     if (typeof window.solana !== 'undefined' && window.solana.isPhantom) {
         alert(`Please send ${amount} SOL to support development. Copying address...`);
