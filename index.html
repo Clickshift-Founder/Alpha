@@ -231,6 +231,56 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 20px rgba(36, 94, 237, 0.3);
         }
+
+        .donation-section {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    color: white;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.95; }
+    50% { opacity: 1; }
+}
+
+.donation-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.donate-btn {
+    padding: 0.6rem 1.2rem;
+    background: white;
+    color: #f5576c;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.donate-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.copy-address {
+    padding: 0.6rem 1.5rem;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
         
         .coming-soon {
             background: linear-gradient(135deg, rgba(38, 194, 129, 0.1), rgba(36, 94, 237, 0.1));
@@ -739,6 +789,21 @@
                 <div class="quick-token" onclick="analyzeQuickToken('JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN')">JUP</div>
                 <div class="quick-token" onclick="analyzeQuickToken('HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3')">PYTH</div>
             </div>
+
+            <!-- Donation Section -->
+<div class="donation-section">
+    <h3>💎 Support ClickShift Development</h3>
+    <p>Help us build AI-powered features for more profitable trading!</p>
+    <div class="donation-buttons">
+        <button class="donate-btn" onclick="initiateDonation(0.1)">0.1 SOL</button>
+        <button class="donate-btn" onclick="initiateDonation(0.25)">0.25 SOL</button>
+        <button class="donate-btn" onclick="initiateDonation(0.5)">0.5 SOL</button>
+        <button class="donate-btn" onclick="initiateDonation(1)">1 SOL</button>
+    </div>
+    <button class="copy-address" onclick="copyDonationAddress()">
+        📋 Copy Donation Address
+    </button>
+</div>
             
             <div class="coming-soon">
                 <h3>🚀 Coming Soon: Real-Time Launch Detection</h3>
@@ -750,7 +815,7 @@
                 <p>Advanced leverage analysis and position management tools</p>
             </div>
         </div>
-        
+                
         <div id="results" class="results-section">
             <div id="loading" class="loading">
                 <div class="spinner"></div>
@@ -898,6 +963,11 @@
    </div>
 
    <script>
+     // Configuration - In production, these come from environment variables
+        const ENV = {
+            HELIUS_API_KEY: '906bd38e-a622-4e86-8982-5519f4769998',
+            DONATION_WALLET: '8YfkH2b4ppoSbBh8Ewei94uQABrqAKn87w4S2CAN7SS5'
+        };
     // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const tokenCache = new Map();
@@ -1056,6 +1126,41 @@ function setCachedData(address, data) {
            document.getElementById('contractAddress').value = address;
            analyzeToken();
        }
+       // Get wallet from env or use default
+const DONATION_WALLET = process.env.NEXT_PUBLIC_DONATION_WALLET || '8YfkH2b4ppoSbBh8Ewei94uQABrqAKn87w4S2CAN7SS5';
+
+function initiateDonation(amount) {
+    if (typeof window.solana !== 'undefined' && window.solana.isPhantom) {
+        alert(`Please send ${amount} SOL to support development. Copying address...`);
+        copyDonationAddress();
+    } else {
+        alert(`To donate ${amount} SOL, please send to the address below:`);
+        copyDonationAddress();
+    }
+    
+    // Track donation intent
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'donation_intent', {
+            'amount': amount,
+            'currency': 'SOL'
+        });
+    }
+}
+
+function copyDonationAddress() {
+    const tempInput = document.createElement('input');
+    tempInput.value = DONATION_WALLET;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    
+    alert('Donation address copied! Thank you for supporting ClickShift Alpha!');
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'copy_donation_address');
+    }
+}
 
        // MAIN ANALYZE FUNCTION - THIS WAS MISSING!
        async function analyzeToken() {
