@@ -4,6 +4,7 @@
 <head>
     <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-75MZH565VW"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -77,6 +78,7 @@
             font-weight: 600;
             background: linear-gradient(45deg, #245EED, #26C281);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
         }
@@ -1277,43 +1279,72 @@ function setCachedData(address, data) {
            });
        }
        
-       function submitFeedback() {
-           userFeedback.email = document.getElementById('userEmail').value;
-           userFeedback.comment = document.getElementById('feedbackText').value;
-           userFeedback.timestamp = new Date().toISOString();
-           userFeedback.location = Intl.DateTimeFormat().resolvedOptions().timeZone;
-           
-           if (!userFeedback.rating) {
-               alert('Please rate the alpha first');
-               return;
-           }
-           
-           if (!userFeedback.email) {
-               alert('Please provide your email for alpha access notifications');
-               return;
-           }
-           
-           // Track feedback in Google Analytics
-           if (typeof gtag !== 'undefined') {
-               gtag('event', 'submit_feedback', {
-                   'nps_score': userFeedback.rating,
-                   'user_chain': userFeedback.chain,
-                   'trading_type': userFeedback.tradingType,
-                   'has_email': !!userFeedback.email,
-                   'features_wanted': userFeedback.comment
-               });
-           }
-           
-           console.log('ClickShift Alpha Demo Feedback:', userFeedback);
-           alert('🎉 Welcome to ClickShift Alpha! You\'ll be first to access our production-ready platform!');
-           
-           // Reset form
-           document.querySelectorAll('.feedback-btn').forEach(btn => btn.classList.remove('active'));
-           document.getElementById('userEmail').value = '';
-           document.getElementById('feedbackText').value = '';
-           userFeedback = { rating: null, chain: null, tradingType: null, email: '', comment: '', timestamp: null };
-       }
-       
+  // Initialize Supabase
+  const supabaseUrl = "https://aneeavsoqcqhxcmcssya.supabase.co"; // <-- Confirm this from Project Settings
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZWVhdnNvcWNxaHhjbWNzc3lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTA4ODIsImV4cCI6MjA2OTIyNjg4Mn0.LbZSmgXdvgtTz44M-382AFOxVTYfG95WSLL-hRgKgLs"; // <-- paste your anon public key
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  userFeedback = { rating: null, chain: null, tradingType: null, email: '', comment: '', timestamp: null };
+
+  async function submitFeedback() {
+      userFeedback.email = document.getElementById('userEmail').value;
+      userFeedback.comment = document.getElementById('feedbackText').value;
+      userFeedback.timestamp = new Date().toISOString();
+      userFeedback.location = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      if (!userFeedback.rating) {
+          alert('Please rate the alpha first');
+          return;
+      }
+
+      if (!userFeedback.email) {
+          alert('Please provide your email for alpha access notifications');
+          return;
+      }
+
+      // Track feedback in Google Analytics (optional)
+      if (typeof gtag !== 'undefined') {
+          gtag('event', 'submit_feedback', {
+              'nps_score': userFeedback.rating,
+              'user_chain': userFeedback.chain,
+              'trading_type': userFeedback.tradingType,
+              'has_email': !!userFeedback.email,
+              'features_wanted': userFeedback.comment
+          });
+      }
+
+      // Save feedback to Supabase
+      const { data, error } = await supabase
+          .from('feedback')
+          .insert([{
+              email: userFeedback.email,
+              comment: userFeedback.comment,
+              rating: userFeedback.rating,
+              chain: userFeedback.chain,
+              trading_type: userFeedback.tradingType,
+              location: userFeedback.location,
+              timestamp: userFeedback.timestamp
+          }]);
+
+      if (error) {
+          console.error("Supabase insert error:", error);
+          alert("⚠️ Could not save your feedback. Please try again.");
+          return;
+      }
+
+      console.log('Feedback saved:', data);
+      alert('🎉 Thanks for your feedback! You’ll be first to access Alpha 2.0 🚀');
+
+      // Reset form
+      document.querySelectorAll('.feedback-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('userEmail').value = '';
+      document.getElementById('feedbackText').value = '';
+      userFeedback = { rating: null, chain: null, tradingType: null, email: '', comment: '', timestamp: null };
+
+      // Redirect to Telegram group
+      window.location.href = "https://t.me/ClickShiftAlerts";
+  }
+
        // Quick token analysis
        function analyzeQuickToken(address) {
            document.getElementById('contractAddress').value = address;
