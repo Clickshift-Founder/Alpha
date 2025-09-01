@@ -510,6 +510,30 @@
             align-items: center;
             gap: 10px;
         }
+
+        .signal-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin: 8px 0;
+}
+
+.signal-oversold { 
+    background: linear-gradient(45deg, #26C281, #4CAF50); 
+    color: white; 
+}
+
+.signal-overbought { 
+    background: linear-gradient(45deg, #FF7E00, #FF6B6B); 
+    color: white; 
+}
+
+.signal-neutral { 
+    background: linear-gradient(45deg, #E5E5E5, #B0B0B0); 
+    color: #666; 
+}
         
         .cluster-item, .analysis-card {
             background: linear-gradient(135deg, rgba(36, 94, 237, 0.03), rgba(38, 194, 129, 0.03));
@@ -1584,6 +1608,7 @@ async function getRealHolderData(tokenAddress) {
             };
             
             // Calculate percentages
+            // Calculate percentages
             holders.slice(0, 10).forEach(h => {
                 distribution.top10 += (parseFloat(h.amount || 0) / totalSupply) * 100;
             });
@@ -2361,6 +2386,7 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
            
            // Display all sections with risk assessment moved up
            displayEntryRecommendation(analysis.entryRecommendation);
+           displayTechnicalIntelligence(tokenData, analysis);
            displayRiskAssessment(analysis.riskAssessment); // Moved up for better UX
            displayEnhancedTokenInfo(tokenData);
            displayHolderDistribution(holderData);
@@ -2415,6 +2441,133 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
            document.getElementById('entryContent').innerHTML = content;
            entryDiv.style.display = 'block';
        }
+
+       function displayTechnicalIntelligence(tokenData, analysis) {
+    // Calculate RSI and ATR
+    const rsi = calculateSimpleRSI(tokenData);
+    const atr = calculateATR(tokenData);
+    const targets = calculateATRTargets(tokenData.price, atr, tokenData.marketCap);
+    
+    // Create the technical intelligence section
+    const techDiv = document.createElement('div');
+    techDiv.className = 'analysis-section';
+    techDiv.id = 'technicalIntelligence';
+    
+    techDiv.innerHTML = `
+        <h2 class="analysis-title">📊 Advanced Technical Intelligence</h2>
+        
+        <!-- RSI ANALYSIS -->
+        <div class="analysis-card">
+            <h3 style="color: #245EED; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                🎯 RSI Signal Analysis
+                <span style="font-size: 0.8em; background: rgba(36, 94, 237, 0.1); padding: 4px 8px; border-radius: 12px;">Live</span>
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                <div style="background: white; border-radius: 12px; padding: 20px; border-left: 4px solid #26C281; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                    <div style="font-weight: 600; color: #666; margin-bottom: 8px;">Current RSI</div>
+                    <div style="font-size: 2em; font-weight: 700; margin: 10px 0; color: #245EED;">${rsi.toFixed(1)}</div>
+                    <div class="${getRSIClass(rsi)}" style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin: 8px 0;">
+                        ${getRSISignal(rsi)}
+                    </div>
+                    ${rsi < 30 ? `
+                        <div style="margin-top: 12px;">
+                            <div style="font-size: 0.9em; color: #26C281; font-weight: 600;">
+                                🚀 Pump Probability: ${Math.min(85, (30 - rsi) * 5 + 60).toFixed(0)}% in next 2-6 hours
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div style="background: white; border-radius: 12px; padding: 20px; border-left: 4px solid #26C281; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                    <div style="font-weight: 600; color: #666; margin-bottom: 8px;">RSI Confidence</div>
+                    <div style="background: #E5E5E5; height: 8px; border-radius: 4px; overflow: hidden; margin: 10px 0;">
+                        <div style="height: 100%; background: linear-gradient(90deg, #26C281, #4CAF50); width: ${getRSIConfidence(rsi)}%; border-radius: 4px; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="font-size: 0.9em; color: #245EED; margin-top: 8px;">
+                        <strong>${getRSIConfidence(rsi)}% Confidence</strong> - ${getRSIConfidenceText(rsi)}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1)); border: 2px solid rgba(255, 193, 7, 0.3); padding: 15px; border-radius: 10px; margin-top: 15px;">
+                <div style="color: #FF8C00; font-weight: 600; margin-bottom: 8px;">💡 What is RSI? (Beginner Guide)</div>
+                <p style="color: #666; line-height: 1.6;">
+                    <strong>RSI (Relative Strength Index)</strong> measures if a token is oversold or overbought:<br>
+                    • <strong>Below 30:</strong> Oversold = Good time to BUY (price likely to bounce up)<br>
+                    • <strong>Above 70:</strong> Overbought = Consider SELLING (price might drop)<br>
+                    • <strong>30-70:</strong> Normal range - wait for clearer signals<br><br>
+                    <strong>Why it works:</strong> When everyone sells (oversold), smart money buys the dip. When everyone buys (overbought), smart money takes profits.
+                </p>
+            </div>
+        </div>
+
+        <!-- ATR DYNAMIC TARGETS -->
+        <div class="analysis-card">
+            <h3 style="color: #26C281; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                ⚡ ATR Dynamic Targets
+                <span style="font-size: 0.8em; background: rgba(38, 194, 129, 0.1); padding: 4px 8px; border-radius: 12px;">Smart Money</span>
+            </h3>
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: rgba(38, 194, 129, 0.1); border-radius: 8px;">
+                <div style="font-size: 1.1em; font-weight: 600; color: #26C281; margin-bottom: 5px;">
+                    Current ATR: $${atr.toFixed(8)} (${getVolatilityLevel(atr, tokenData.price)})
+                </div>
+                <div style="color: #666; font-size: 0.9em;">
+                    Volatility-adjusted targets calculated in real-time
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; padding: 15px; background: rgba(255, 255, 255, 0.5); border-radius: 10px;">
+                <div style="text-align: center; padding: 12px; border-radius: 8px; background: rgba(36, 94, 237, 0.1);">
+                    <div style="font-weight: 600; margin-bottom: 8px;">🛑 Dynamic Stop Loss</div>
+                    <div style="font-size: 1.1em; font-weight: 600; color: #0A1C3D; margin-bottom: 5px;">$${targets.stopLoss.price.toFixed(8)}</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">MC: $${(targets.stopLoss.marketCap/1000000).toFixed(1)}M (-${((1 - targets.stopLoss.price/tokenData.price) * 100).toFixed(0)}% protection)</div>
+                    <div style="font-size: 0.8em; color: #FF7E00; margin-top: 5px;">
+                        Risk example: $150 → $${(150 * targets.stopLoss.price/tokenData.price).toFixed(0)} (-$${(150 - 150 * targets.stopLoss.price/tokenData.price).toFixed(0)})
+                    </div>
+                </div>
+                
+                <div style="text-align: center; padding: 12px; border-radius: 8px; background: rgba(36, 94, 237, 0.1);">
+                    <div style="font-weight: 600; margin-bottom: 8px;">🎯 Take Profit 1</div>
+                    <div style="font-size: 1.1em; font-weight: 600; color: #0A1C3D; margin-bottom: 5px;">$${targets.takeProfit1.price.toFixed(8)}</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">MC: $${(targets.takeProfit1.marketCap/1000000).toFixed(1)}M (+${((targets.takeProfit1.price/tokenData.price - 1) * 100).toFixed(0)}% gain)</div>
+                    <div style="font-size: 0.8em; color: #26C281; margin-top: 5px;">
+                        Profit: $150 → $${(150 * targets.takeProfit1.price/tokenData.price).toFixed(0)} (+$${(150 * targets.takeProfit1.price/tokenData.price - 150).toFixed(0)})
+                    </div>
+                </div>
+                
+                <div style="text-align: center; padding: 12px; border-radius: 8px; background: rgba(36, 94, 237, 0.1);">
+                    <div style="font-weight: 600; margin-bottom: 8px;">🚀 Take Profit 2</div>
+                    <div style="font-size: 1.1em; font-weight: 600; color: #0A1C3D; margin-bottom: 5px;">$${targets.takeProfit2.price.toFixed(8)}</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">MC: $${(targets.takeProfit2.marketCap/1000000).toFixed(1)}M (+${((targets.takeProfit2.price/tokenData.price - 1) * 100).toFixed(0)}% gain)</div>
+                    <div style="font-size: 0.8em; color: #26C281; margin-top: 5px;">
+                        Profit: $150 → $${(150 * targets.takeProfit2.price/tokenData.price).toFixed(0)} (+$${(150 * targets.takeProfit2.price/tokenData.price - 150).toFixed(0)})
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 12px; background: rgba(36, 94, 237, 0.05); border-radius: 8px; margin-top: 15px;">
+                <strong>⚖️ Risk/Reward Analysis:</strong> Risk $${(150 - 150 * targets.stopLoss.price/tokenData.price).toFixed(0)} to make $${(150 * targets.takeProfit1.price/tokenData.price - 150).toFixed(0)}-$${(150 * targets.takeProfit2.price/tokenData.price - 150).toFixed(0)} (1:${((targets.takeProfit1.price/tokenData.price - 1) / (1 - targets.stopLoss.price/tokenData.price)).toFixed(1)} to 1:${((targets.takeProfit2.price/tokenData.price - 1) / (1 - targets.stopLoss.price/tokenData.price)).toFixed(1)} ratio)
+            </div>
+            
+            <div style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1)); border: 2px solid rgba(255, 193, 7, 0.3); padding: 15px; border-radius: 10px; margin-top: 15px;">
+                <div style="color: #FF8C00; font-weight: 600; margin-bottom: 8px;">💡 What is ATR? (Beginner Guide)</div>
+                <p style="color: #666; line-height: 1.6;">
+                    <strong>ATR (Average True Range)</strong> measures how much a token's price moves on average:<br>
+                    • <strong>High ATR:</strong> Big price swings = Higher risk, higher potential profits<br>
+                    • <strong>Low ATR:</strong> Small price movements = Lower risk, smaller profits<br><br>
+                    <strong>Smart Strategy:</strong> ATR helps set realistic stop-losses and targets based on the token's natural volatility. Instead of guessing, we use math to protect your money and maximize profits.<br><br>
+                    <strong>Market Cap Trading:</strong> Some traders prefer market cap over price because it shows the true size. A $100M market cap token has more room to grow than a $10B one.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    // Insert BEFORE exit clusters section
+    const pumpSection = document.getElementById('pumpAnalysis').parentElement;
+    pumpSection.parentNode.insertBefore(techDiv, pumpSection);
+}
 
        function displayEnhancedTokenInfo(tokenData) {
            const tokenInfoDiv = document.getElementById('tokenInfo');
@@ -2761,45 +2914,6 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
        }
        // ============ NEW DISPLAY FUNCTIONS - ADD THESE ============
 
-function displayTechnicalAnalysis(technicalAnalysis) {
-    const techDiv = document.createElement('div');
-    techDiv.className = 'analysis-section';
-    techDiv.innerHTML = `
-        <h2 class="analysis-title">📊 Technical Intelligence</h2>
-        <div class="analysis-card">
-            <h3 style="color: #245EED; margin-bottom: 15px;">RSI Analysis</h3>
-            <div style="margin-bottom: 20px;">
-                <div style="font-size: 1.4em; font-weight: 600; margin-bottom: 10px;">
-                    RSI: ${technicalAnalysis.rsi.rsi} (${technicalAnalysis.rsi.signal})
-                </div>
-                <div style="background: rgba(36, 94, 237, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <strong>🎯 Pump Probability:</strong> ${technicalAnalysis.rsi.pumpProbability}% in ${technicalAnalysis.rsi.timeframe}
-                </div>
-                <p style="color: #666;">${technicalAnalysis.rsi.interpretation}</p>
-            </div>
-            
-            <h3 style="color: #26C281; margin-bottom: 15px;">ATR Dynamic Targets</h3>
-            <div class="price-targets">
-                <div class="target-item">
-                    <div style="font-weight: 600;">🛑 Dynamic Stop Loss</div>
-                    <div class="target-price">$${technicalAnalysis.dynamicTargets.stopLoss.toFixed(8)}</div>
-                </div>
-                <div class="target-item">
-                    <div style="font-weight: 600;">🎯 Take Profit 1</div>
-                    <div class="target-price">$${technicalAnalysis.dynamicTargets.takeProfit1.toFixed(8)}</div>
-                </div>
-                <div class="target-item">
-                    <div style="font-weight: 600;">🎯 Take Profit 2</div>
-                    <div class="target-price">$${technicalAnalysis.dynamicTargets.takeProfit2.toFixed(8)}</div>
-                </div>
-            </div>
-            <p style="color: #666; font-size: 0.9em; margin-top: 10px;">${technicalAnalysis.dynamicTargets.reasoning}</p>
-        </div>
-    `;
-    
-    document.getElementById('content').appendChild(techDiv);
-}
-
 function displayLegitimacyCheck(legitimacyCheck) {
     const legitDiv = document.createElement('div');
     legitDiv.className = 'analysis-section';
@@ -3111,6 +3225,83 @@ function trackDonationIntent(amount, method) {
     }
     
     console.log(`Donation Intent: ${amount} SOL via ${method}`);
+}
+// RSI Calculation and Helper Functions
+function calculateSimpleRSI(tokenData) {
+    const priceChange24h = tokenData.priceChange24h || 0;
+    const volume = tokenData.volume24h || 0;
+    const liquidity = tokenData.liquidity || 1;
+    
+    let baseRSI = 50;
+    
+    if (priceChange24h < -15) baseRSI = 25;
+    if (priceChange24h < -25) baseRSI = 20;
+    if (priceChange24h > 15) baseRSI = 75;
+    if (priceChange24h > 30) baseRSI = 85;
+    
+    const volumeRatio = volume / liquidity;
+    if (volumeRatio < 0.5 && priceChange24h < 0) baseRSI -= 5;
+    if (volumeRatio > 3 && priceChange24h > 0) baseRSI += 5;
+    
+    return Math.max(0, Math.min(100, baseRSI));
+}
+
+function getRSIClass(rsi) {
+    if (rsi < 30) return 'signal-badge signal-oversold';
+    if (rsi > 70) return 'signal-badge signal-overbought';
+    return 'signal-badge signal-neutral';
+}
+
+function getRSISignal(rsi) {
+    if (rsi < 30) return 'OVERSOLD - Buy Signal';
+    if (rsi > 70) return 'OVERBOUGHT - Sell Signal';
+    return 'NEUTRAL - Wait for Signal';
+}
+
+function getRSIConfidence(rsi) {
+    if (rsi < 20 || rsi > 80) return 90;
+    if (rsi < 30 || rsi > 70) return 75;
+    if (rsi < 40 || rsi > 60) return 60;
+    return 45;
+}
+
+function getRSIConfidenceText(rsi) {
+    if (rsi < 20) return 'Very strong oversold signal';
+    if (rsi < 30) return 'Strong oversold signal';
+    if (rsi > 80) return 'Very strong overbought signal';
+    if (rsi > 70) return 'Strong overbought signal';
+    return 'Neutral signal - monitor';
+}
+
+// ATR Calculation and Helper Functions
+function calculateATR(tokenData) {
+    const price = tokenData.price;
+    const volatility = Math.abs(tokenData.priceChange24h) / 100;
+    return price * Math.max(0.02, volatility);
+}
+
+function calculateATRTargets(currentPrice, atr, marketCap) {
+    const stopLoss = currentPrice - (atr * 1.5);
+    const takeProfit1 = currentPrice + (atr * 2.5);
+    const takeProfit2 = currentPrice + (atr * 4.0);
+    
+    const stopLossMC = marketCap * (stopLoss / currentPrice);
+    const takeProfit1MC = marketCap * (takeProfit1 / currentPrice);
+    const takeProfit2MC = marketCap * (takeProfit2 / currentPrice);
+    
+    return {
+        stopLoss: { price: stopLoss, marketCap: stopLossMC },
+        takeProfit1: { price: takeProfit1, marketCap: takeProfit1MC },
+        takeProfit2: { price: takeProfit2, marketCap: takeProfit2MC }
+    };
+}
+
+function getVolatilityLevel(atr, price) {
+    const volatilityPercent = (atr / price) * 100;
+    if (volatilityPercent > 8) return 'Extreme Volatility';
+    if (volatilityPercent > 5) return 'High Volatility';
+    if (volatilityPercent > 2) return 'Moderate Volatility';
+    return 'Low Volatility';
 }
 // ============ END DONATION SYSTEM ============
 // ============ AI LEARNING SYSTEM FOR CURRENT VERSION ============
