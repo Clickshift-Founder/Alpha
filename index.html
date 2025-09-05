@@ -1417,8 +1417,9 @@ function setCachedData(address, data) {
        // ============ INITIALIZE CACHE ON PAGE LOAD ============
 // Add this to your DOMContentLoaded event listener:
 
+// ✅ FIX THIS in your window.addEventListener('DOMContentLoaded')
 window.addEventListener('DOMContentLoaded', () => {
-    loadCache(); // This was missing - now cache will work!
+    loadCache(); // ✅ ADD THIS LINE - it was missing!
     console.log('🚀 ClickShift Alpha initialized with cache system');
     
     // Optional: Clear old cache entries (older than 1 hour)
@@ -1996,6 +1997,25 @@ async function validatePriceWithJupiter(tokenAddress) {
 function generateSmartEntryRecommendation(tokenData, orders, holderData) {
     let recommendation = 'WAIT';
     let confidence = 'MEDIUM';
+
+        // ✅ ADD THIS: Use learning data to improve scoring
+    const learningInsights = clickShiftLearning.getLearningInsights();
+    const similarTokens = clickShiftLearning.findSimilarTokens(tokenData);
+    
+    // Adjust scoring based on historical performance
+    if (similarTokens.successRate > 70) {
+        bullishScore += 15;
+        confidence = 'HIGH';
+    } else if (similarTokens.successRate < 40) {
+        bearishScore += 10;
+    }
+    
+    // Use best-performing timeframes
+    if (learningInsights.bestTimeframe && learningInsights.bestTimeframe.accuracy > 75) {
+        // Adjust recommendation confidence based on proven timeframes
+        confidence = learningInsights.bestTimeframe.accuracy > 80 ? 'HIGH' : 'MEDIUM';
+    }
+
     let reasoning = '';
     
     const currentPrice = tokenData.price;
