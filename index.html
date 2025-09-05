@@ -1091,7 +1091,10 @@
             <!-- DEMO DISCLAIMER -->
             <div class="demo-disclaimer">
                 <h4>🚀 How it Works</h4>
-                <p>Paste the contract address of any token launched on the Solana blockchain, paste in the window below. Then Clickshift does the magic. Scroll down to see the results👇🏽.</p>
+                <p>Paste the contract address of any token launched on the Solana blockchain in the window below.<br>
+                   Then Clickshift does the magic.<br>
+                   Scroll down to see the results👇🏽.<br>
+                   Scroll down further to give us your feedback👇🏽</p>
             </div>
             
             <div class="input-group">
@@ -1202,6 +1205,7 @@
                 <!-- Entry Recommendation Section -->
                 <div class="entry-recommendation" id="entryRecommendation" style="display: none;">
                     <h3>📍 Smart Entry Point Analysis</h3>
+                    <h5>   Traders'Execution Engine</h5>
                     <div id="entryContent">
                         <!-- Entry recommendation will be populated here -->
                     </div>
@@ -1625,6 +1629,7 @@ async function analyzeToken() {
         
         displayFullResults(tokenData, analysis, holderData);
         logDemoUsage(contractAddress, tokenData.symbol);
+        
         
     } catch (error) {
         showError(error.message);
@@ -2537,6 +2542,7 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
 }
        
        function displayFullResults(tokenData, analysis, holderData) {
+         clearPreviousAnalysis();
            document.getElementById('loading').style.display = 'none';
            document.getElementById('content').style.display = 'block';
            
@@ -2550,6 +2556,21 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
            displayExitClusters(analysis.exitClusters, tokenData);
            displayWhaleAnalysis(analysis.whaleActivity);
        }
+
+       function clearPreviousAnalysis() {
+    // Remove all dynamic sections that get recreated
+    const sectionsToRemove = [
+        'technicalIntelligence',
+        'holderDistribution', 
+        'learning-feedback',
+        'accuracyStats'
+    ];
+    
+    sectionsToRemove.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.remove();
+    });
+}
 
        function displayEntryRecommendation(rec) {
            const entryDiv = document.getElementById('entryRecommendation');
@@ -2591,7 +2612,6 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
                <div style="padding: 10px; background: rgba(36, 94, 237, 0.05); border-radius: 8px; font-size: 0.9em;">
                    <strong>⚡ Risk/Reward:</strong> 1:${rec.riskReward} | 
                    <strong>📊 Demo Note:</strong> Analysis based on algorithmic intelligence preview
-                   // In your displayEntryRecommendation function, add this after the price targets:
 <div style="padding: 12px; background: rgba(245, 158, 11, 0.05); border-radius: 8px; margin-top: 15px;">
     <h4 style="color: #F59E0B; margin-bottom: 8px;">📊 Signal Clarification:</h4>
     <p style="color: #666; font-size: 0.9em; line-height: 1.5;">
@@ -2612,8 +2632,6 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
     const rsi = calculateSimpleRSI(tokenData);
     const atr = calculateATR(tokenData);
     const targets = calculateATRTargets(tokenData.price, atr, tokenData.marketCap);
-    
-    // 🚀 HOLISTIC INTELLIGENCE SUMMARY
     const holisticSummary = generateHolisticTradingSummary(tokenData, analysis, rsi, targets, holderData);
    const pumpTiming = calculateAdvancedPumpProbability(tokenData, rsi, holderData, analysis);
         
@@ -2628,6 +2646,8 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
             <div style="position: relative; z-index: 2;">
                 <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                     🧠 ClickShift Intelligence Verdict
+                    <h4 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                     Very Conservative verdict. For very new and skeptical users.
                     <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.7em;">ALGORITHMIC ANALYSIS</span>
                 </h3>
                 <div style="font-size: 1.1em; line-height: 1.8; margin-bottom: 15px;">
