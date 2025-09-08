@@ -2666,8 +2666,6 @@ function generateSmartEntryRecommendation(tokenData, orders, holderData) {
             <div style="position: relative; z-index: 2;">
                 <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                     🧠 ClickShift Intelligence Verdict
-                    <h4 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                     Very Conservative verdict. For very new and skeptical users.
                     <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.7em;">ALGORITHMIC ANALYSIS</span>
                 </h3>
                 <div style="font-size: 1.1em; line-height: 1.8; margin-bottom: 15px;">
@@ -3363,6 +3361,8 @@ function getVolatilityLevel(atr, price) {
     if (volatilityPercent > 2) return 'Moderate Volatility';
     return 'Low Volatility';
 }
+// ============ FIXED SCORING LOGIC FOR CLICKSHIFT ALPHA ============
+
 function generateHolisticTradingSummary(tokenData, analysis, rsi, targets, holderData) {
     try {
         const signals = [];
@@ -3441,41 +3441,55 @@ function generateHolisticTradingSummary(tokenData, analysis, rsi, targets, holde
             overallScore -= 10;
         }
         
-        // Generate recommendation with reasoning
+        // ============ FIXED SCORING LOGIC ============
+        // Ensure score is bounded
         overallScore = Math.max(0, Math.min(100, overallScore));
         
         let recommendation, action, timeHorizon, confidence, reasoning;
         
-        if (overallScore >= 75) {
-            recommendation = 'Multiple bullish confluences detected';
+        // 🔧 FIXED: Clear, non-overlapping score ranges
+        if (overallScore >= 80) {
+            recommendation = 'Exceptional opportunity with multiple bullish confluences';
             action = 'STRONG BUY';
             timeHorizon = '15 minutes - 2 hours';
-            confidence = 'HIGH';
-            reasoning = `${bullishCount} bullish vs ${bearishCount} bearish signals create high-probability setup`;
-        } else if (overallScore >= 65) {
-            recommendation = 'Favorable risk-reward setup identified';
+            confidence = 'VERY HIGH';
+            reasoning = `${bullishCount} bullish vs ${bearishCount} bearish signals create exceptional setup`;
+        } else if (overallScore >= 70) {
+            recommendation = 'Strong bullish setup with favorable risk-reward';
             action = 'BUY';
-            timeHorizon = '1-4 hours';
-            confidence = 'MEDIUM';
-            reasoning = `Bullish signals outweigh risks, but monitor key levels`;
-        } else if (overallScore <= 35) {
-            recommendation = 'Multiple risk factors present';
-            action = 'AVOID';
-            timeHorizon = 'Wait for improvement';
+            timeHorizon = '30 minutes - 4 hours';
             confidence = 'HIGH';
-            reasoning = `${bearishCount} bearish signals suggest high loss probability`;
-        } else if (overallScore <= 45) {
-            recommendation = 'Mixed signals require patience';
+            reasoning = `Strong bullish confluence outweighs risks significantly`;
+        } else if (overallScore >= 60) {
+            recommendation = 'Moderate bullish bias with manageable risks';
+            action = 'BUY';
+            timeHorizon = '1-6 hours';
+            confidence = 'MEDIUM';
+            reasoning = `Bullish signals outweigh risks, but monitor key levels closely`;
+        } else if (overallScore >= 50) {
+            recommendation = 'Balanced signals suggest cautious monitoring';
+            action = 'MONITOR';
+            timeHorizon = '2-8 hours';
+            confidence = 'MEDIUM';
+            reasoning = 'Balanced signals require additional catalyst or clearer direction';
+        } else if (overallScore >= 40) {
+            recommendation = 'Mixed signals favor waiting for clarity';
             action = 'WAIT';
             timeHorizon = '4-12 hours';
             confidence = 'MEDIUM';
-            reasoning = 'Conflicting signals suggest waiting for clearer direction';
+            reasoning = 'Conflicting signals suggest waiting for more definitive setup';
+        } else if (overallScore >= 25) {
+            recommendation = 'Bearish bias suggests avoiding or minimal exposure';
+            action = 'AVOID';
+            timeHorizon = 'Wait for improvement';
+            confidence = 'HIGH';
+            reasoning = `${bearishCount} bearish signals outweigh positives - high risk`;
         } else {
-            recommendation = 'Neutral market conditions';
-            action = 'MONITOR';
-            timeHorizon = 'Ongoing';
-            confidence = 'LOW';
-            reasoning = 'Balanced signals require additional catalyst';
+            recommendation = 'Extreme risk detected - avoid completely';
+            action = 'STRONG AVOID';
+            timeHorizon = 'Wait for major improvement';
+            confidence = 'VERY HIGH';
+            reasoning = `Multiple severe risk factors present - extremely high loss probability`;
         }
         
         // Create detailed summary with explanations
@@ -3494,7 +3508,15 @@ function generateHolisticTradingSummary(tokenData, analysis, rsi, targets, holde
             bullishSignals: bullishCount,
             bearishSignals: bearishCount,
             keyExplanations: explanations,
-            detailedReasoning: reasoning
+            detailedReasoning: reasoning,
+            // 🔧 NEW: Score breakdown for debugging
+            scoreBreakdown: {
+                rsi: rsi < 30 ? '+15' : rsi > 70 ? '-15' : '0',
+                volume: volumeRatio > 3 ? '+12' : volumeRatio > 1.5 ? '+8' : volumeRatio < 0.5 ? '-5' : '0',
+                holders: holderData?.isReal ? (holderData.topHolder < 15 ? '+10' : holderData.topHolder > 25 ? '-15' : '0') : '0',
+                momentum: priceChange > 20 ? '+10' : priceChange < -15 ? '-8' : '0',
+                liquidity: tokenData.liquidity > 100000 ? '+5' : tokenData.liquidity < 10000 ? '-10' : '0'
+            }
         };
         
     } catch (error) {
@@ -3504,7 +3526,8 @@ function generateHolisticTradingSummary(tokenData, analysis, rsi, targets, holde
             overallScore: 50,
             recommendedAction: 'MONITOR',
             timeHorizon: 'Manual assessment',
-            confidence: 'LOW'
+            confidence: 'LOW',
+            scoreBreakdown: { error: error.message }
         };
     }
 }
