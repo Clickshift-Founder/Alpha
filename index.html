@@ -155,6 +155,26 @@
         line-height: 1.6;
     }
 }
+
+ .working-guide {
+            background: linear-gradient(135deg, rgba(36, 94, 237, 0.1), rgba(38, 194, 129, 0.1));
+            border: 2px solid rgba(36, 94, 237, 0.3);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .working-guide h4 {
+            color: #245EED;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .working-guide p {
+            color: #666;
+            font-size: 0.9em;
+        }
         
         .input-section {
             background: rgba(255, 255, 255, 0.95);
@@ -176,7 +196,7 @@
             gap: 10px;
         }
         
-        .demo-disclaimer {
+        .leverage-live {
             background: linear-gradient(135deg, rgba(36, 94, 237, 0.1), rgba(38, 194, 129, 0.1));
             border: 2px solid rgba(36, 94, 237, 0.3);
             padding: 15px;
@@ -185,17 +205,33 @@
             text-align: center;
         }
 
-        .demo-disclaimer h4 {
+        .leverage-live h4 {
             color: #245EED;
             margin-bottom: 8px;
             font-weight: 600;
         }
 
-        .demo-disclaimer p {
+        .leverage-live p {
             color: #666;
             font-size: 0.9em;
         }
         
+        .leverage-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #063d32, #0099ff);
+    color: #fff;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+}
+.leverage-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.6);
+}
         .input-group {
             display: flex;
             gap: 15px;
@@ -1079,12 +1115,9 @@
   <span class="beta-badge">Join Alpha Access</span>
 </a>
       <p style="margin-top: 20px; font-size: 1.1em; color: #003366; text-align: center; line-height: 1.8; font-weight: 500;">
-💸 <strong>Tired of losing money on crypto trades? We were too.</strong><br>
-🎯 That's why we built the world's first AI that predicts WHERE traders exit before they do.<br>
-⚡ Get 15-minute pump warnings, whale movement alerts, and precise entry/exit signals.<br>
-🛡️ Our algorithms have 73% accuracy - turning losing traders into consistent winners.<br>
-📊 Real holder data, not estimates. Battle-tested ATR targets, not guesswork.<br>
-🚀 <strong>525+ traders use this daily. 91% say it's "life-changing" for their trading.</strong>
+<strong>💸Never get rugged again!</strong>
+<p>📊 <strong>Exit the market before the Whales!</strong></p>
+🚀 <strong>Trusted by 525+ traders in 47 nations.</strong>
 </p>
 
 
@@ -1093,14 +1126,13 @@
         <div class="input-section">
             <h2 class="section-title">🔍 Analyze Any Solana Token</h2>
             
-            <!-- DEMO DISCLAIMER -->
-            <div class="demo-disclaimer">
+            <!-- How it Works-->
+            <div class="working-guide">
                 <h4>🚀 How it Works</h4>
-                <p>Paste the contract address of any token launched on the Solana blockchain in the window below.<br>
-                   Then Clickshift does the magic.<br>
+                <p>Paste the contract address of any token on Solana chain👇🏽.<br>
+                   Click "Get Alpha", we do the magic.<br>
                    Scroll down to see the results👇🏽.<br>
-                   Scroll down further to give us your feedback👇🏽</p>
-            </div>
+                               </div>
             
             <div class="input-group">
                 <input 
@@ -1177,7 +1209,7 @@
                 <span>Supporters</span>
             </div>
             <div class="stat-item">
-                <span class="stat-number">12.8</span>
+                <span class="stat-number">9.8</span>
                 <span>SOL Raised</span>
             </div>
             <div class="stat-item">
@@ -1191,11 +1223,17 @@
             <div class="coming-soon">
                 <h3>🚀 Coming Soon: Real-Time Launch Detection</h3>
                 <p>Get instant alerts for new Solana launches with safety analysis</p>
+                     <a href="https://t.me/ClickShiftAlerts" target="_blank" class="leverage-btn">
+        ⚡ Join the waitlist
+            </a>
             </div>
 
-            <div class="coming-soon" style="margin-top: 15px;">
-                <h3>📊 Coming Soon: Futures Trading Intelligence</h3>
+            <div class="leverage-live" style="margin-top: 15px;">
+                <h3>📊 Futures Signal is Live: Never go liquidated</h3>
                 <p>Advanced leverage analysis and position management tools</p>
+                <a href="https://leverage.clickshift.io" target="_blank" class="leverage-btn">
+        ⚡ Click to Explore
+            </a>
             </div>
         </div>
                 
@@ -1564,7 +1602,6 @@ window.addEventListener('DOMContentLoaded', () => {
        // MAIN ANALYZE FUNCTION - Cache implemented for faster response and limit rating!
        // ============ CRITICAL FIX #1: IMPLEMENT WORKING CACHE SYSTEM ============
 // REPLACE your existing analyzeToken() function with this:
-
 async function analyzeToken() {
     const contractAddress = document.getElementById('contractAddress').value.trim();
     
@@ -1587,6 +1624,9 @@ async function analyzeToken() {
         document.getElementById('content').style.display = 'block';
         displayFullResults(cachedResult.tokenData, cachedResult.analysis, cachedResult.holderData);
         
+        // ✅ Smooth scroll for cached result too
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
         // Track cache usage
         if (typeof gtag !== 'undefined') {
             gtag('event', 'cache_hit', {
@@ -1602,18 +1642,16 @@ async function analyzeToken() {
     document.getElementById('loading').style.display = 'block';
     document.getElementById('content').style.display = 'none';
     document.getElementById('analyzeBtn').disabled = true;
+
+    // ✅ Scroll to “Generating Alpha Intelligence” section as soon as loading appears
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
     
     try {
-        // Fetch real basic data + generate impressive demo features
         const tokenData = await getTokenDataWithDemoEnhancements(contractAddress);
-        
-        if (!tokenData) {
-            throw new Error('Token not found or no trading data available');
-        }
+        if (!tokenData) throw new Error('Token not found or no trading data available');
         
         const holderData = await getRealHolderData(contractAddress);
         
-        // Track in Google Analytics
         if (typeof gtag !== 'undefined') {
             gtag('event', 'analyze_token', {
                 'token_symbol': tokenData.symbol,
@@ -1622,10 +1660,8 @@ async function analyzeToken() {
             });
         }
         
-        // Full analysis pipeline for demo
-        const analysis = await generateFullDemoAnalysis(tokenData, holderData); // Pass holderData
+        const analysis = await generateFullDemoAnalysis(tokenData, holderData);
         
-        // 🚀 CACHE THE RESULT - This was missing!
         setCachedData(contractAddress, {
             tokenData,
             analysis,
@@ -1635,7 +1671,6 @@ async function analyzeToken() {
         
         displayFullResults(tokenData, analysis, holderData);
         logDemoUsage(contractAddress, tokenData.symbol);
-        
         
     } catch (error) {
         showError(error.message);
