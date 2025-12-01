@@ -1031,70 +1031,10 @@
             }
         }
 
-        /* CSS from the original snippet (truncated here) */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            background-color: #121212;
-            color: #E0E0E0;
-            padding-top: 60px; /* Space for the fixed header/nav */
-        }
-
-        /* --- NEW MENU STYLES (Task 1) --- */
-        .top-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #1F1F1F;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #a799ff; /* Bright accent color */
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-
-        .nav-links a {
-            color: #B0B0B0;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: rgb(154, 146, 248);
-        }
-
     </style>
 </head>
 <body>
-       <!-- Task 1: Navigation Menu -->
-    <div class="top-nav">
-        <a href="https://clickshift.io" class="logo">ClickShift Alpha</a>
-        <div class="nav-links">
-            <a href="https://clickshift.io">Home</a>
-            <a href="https://clickshift.io/terms">Terms</a>
-            <a href="https://clickshift.io/faq">FAQ</a>
-        </div>
-    </div>
+     
     <div class="container">
         <div class="header">
             <div class="logo-container">
@@ -1315,7 +1255,14 @@
                         <!-- Entry recommendation will be populated here -->
                     </div>
                 </div>
-               
+                 <!-- Task 2: Call-to-Action (CTA) -->
+        <div id="cta-trade-bot" class="cta-container">
+            <h3>Trade with **10X Speed & Trailing Profit**</h3>
+            <p class="text-sm text-gray-400 mb-4">Leverage this alpha immediately. Execute your strategy faster than market movers.</p>
+            <a href="https://t.me/clicksolbot" target="_blank" class="cta-button">
+                🚀 Trade Instantly with ClickBot
+            </a>
+        </div>
 
                 <!-- Risk Assessment Section - Moved up for better UX -->
                 <div class="analysis-section" id="riskSection" style="display: none;">
